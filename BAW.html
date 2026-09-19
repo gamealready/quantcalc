@@ -1,0 +1,361 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
+<head>  <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-N0YL0FX070"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-N0YL0FX070');
+</script>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1337506067911632"
+  crossorigin="anonymous"></script>
+<title>BAW Analytic American Option Pricer</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link href="style.css" rel="stylesheet" type="text/css" />
+
+</head>
+<body>
+<div class="main">
+
+  <div class="header">
+    <div class="header_resize">
+      <div class="logo"><h1><a href="index.html">Quant<span>Calc</span> <small>the calculator for all quants</small></a></h1></div>
+      <div class="menu_nav">
+        <ul>
+          <li ><a href="index.html">Home</a></li>
+          <li class="active"><a href="pricing.html">Pricing</a></li>
+          <li><a href="calibration.html">Hedging</a></li>
+          <li><a href="paper.html">Paper</a></li><li><a href="risk.html">Risk Management</a></li>
+          <li><a href="about.html">About us</a></li>
+          <li><a href="contact.html">Contact us</a></li>
+        </ul>
+      </div>
+      <div class="clr"></div>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="content_resize">
+      <div class="mainbar">
+        <div class="article">
+          <h2><span>Analytic American Option Pricer</span></h2><div class="clr"></div>
+          <p>Posted by <a href="contact.html">Gary Pai</a></p>
+
+          
+          
+          
+          
+          
+          
+          
+<script type="text/javascript">
+
+
+/**
+ * Barone-Adesi and Whaley (1987) Quadratic Approximation for American Option Pricing
+ *
+ * Parameters:
+ * S: Current Stock Price
+ * K: Strike Price
+ * T: Time to Expiration (years)
+ * r: Risk-free Rate
+ * q: Dividend Yield (Cost of Carry 'b' = r - q)
+ * sigma: Volatility (Implied or Historical)
+ * optionType: 'call' or 'put'
+ */
+
+// 1. Cumulative Standard Normal Distribution (CDF) N(x)
+// (Using the standard highly accurate approximation)
+// --- Helper Functions (Omitting for brevity, as they remain the same) ---
+// Includes normSCDF, blackScholes, getM, and bawCriticalPrice 
+// (The bawCriticalPrice function includes the robust iterative solver logic)
+// ...
+
+// Standard Normal CDF (N(x))
+function normSCDF(x) {
+    const a1 = 0.319381530, a2 = -0.356563782, a3 = 1.781477937, a4 = -1.821255978, a5 = 1.330274429;
+    const p = 0.2316419;
+    const sign = (x >= 0) ? 1 : -1;
+    const absX = Math.abs(x);
+    const t = 1.0 / (1.0 + p * absX);
+    const z = 1.0 / Math.sqrt(2.0 * Math.PI) * Math.exp(-0.5 * absX * absX);
+    const y = 1.0 - z * (a1 * t + a2 * t * t + a3 * Math.pow(t, 3) + a4 * Math.pow(t, 4) + a5 * Math.pow(t, 5));
+    return sign === 1 ? y : 1.0 - y;
+}
+
+// Standard Normal PDF (N'(x))
+function normSPDF(x) {
+    return (1.0 / Math.sqrt(2.0 * Math.PI)) * Math.exp(-0.5 * x * x);
+}
+// Black-Scholes Calculations (Price, Delta, Gamma, d1)
+function blackScholes(S, K, T, r, q, sigma, optionType) {
+    if (T <= 0 || S <= 0 || sigma <= 0) return { price: 0, delta: 0, gamma: 0, d1: 0 };
+    
+    const sqrtT = Math.sqrt(T);
+    const d1 = (Math.log(S / K) + (r - q + sigma * sigma / 2.0) * T) / (sigma * sqrtT);
+    const d2 = d1 - sigma * sqrtT;
+
+    const N_d1 = normSCDF(d1);
+    const N_d2 = normSCDF(d2);
+    const N_d1_prime = normSPDF(d1);
+    
+    // Put Price: P = K * e^(-rT) * N(-d2) - S * e^(-qT) * N(-d1)
+    let Price = K * Math.exp(-r * T) * normSCDF(-d2) - S * Math.exp(-q * T) * normSCDF(-d1);
+    if(optionType!='put'){
+      Price = S * Math.exp(-q * T) * normSCDF(d1)- K * Math.exp(-r * T) * normSCDF(d2);
+    }
+    // Put Delta: dP/dS = -e^(-qT) * N(-d1)
+    let Delta = -Math.exp(-q * T) * normSCDF(-d1);
+    if(optionType!='put'){
+      Delta = Math.exp(-q * T) * normSCDF(d1);
+    }
+    // Gamma: d^2P/dS^2 = (e^(-qT) / (S * sigma * sqrt(T))) * N'(d1)
+    const gamma = Math.exp(-q * T) * N_d1_prime / (S * sigma * sqrtT);
+
+    return { price: Price, delta: Delta, gamma: gamma, d1: d1 };
+}
+
+// BAW Parameter m
+function getM(r, q, sigma,T) {
+    // BAW Parameter Calculation for Exponents m1 (Call) and m2 (Put)
+    
+    // NOTE: This function calculates the two exponents (m1, m2) 
+    // based only on cost of carry (b), risk-free rate (r), and volatility (sigma).
+
+    const b = r - q; // Cost of Carry (b = r - q)
+    const sigma2 = sigma * sigma;
+    
+    // 1. Calculate Beta (β)
+    // Beta = b / σ²
+    const N = 2.0 * b / sigma2;
+    
+
+    const M = 2.0 * r / sigma2;
+    const K = 1-Math.exp(-r*T);
+    // 3. Calculate intermediate term N (N is the square root term, often γ)
+    // N = sqrt( (Beta - 1/2)² + K )
+    const sqrt_term=Math.sqrt((N-1)*(N-1)+4.0*M/K);
+
+    // 4. Calculate m1 and m2 (The option exponents)
+    // m = -(Beta - 1/2) ± N
+    
+    // q1 (Negative  Root, used for Put)
+    const m1 = (-(N-1)-sqrt_term)/2.0;
+    
+    // q2 (Positive Root, used for Call)
+    const m2 = (-(N-1)+sqrt_term)/2.0;
+  
+
+    return { m1: m1, m2: m2 };
+}
+
+// 4. NEWTON-RAPHSON Solver for Critical Stock Price (S*)
+function bawCriticalPrice(K, T, r, q, sigma, m, optionType) {
+    const epsilon = 1e-12; 
+    const maxIterations = 50; // Newton-Raphson converges fast
+
+    // Initial guess S_star_0
+    // S* must be close to K for the put.
+    let S_star = K; 
+
+    for (let i = 0; i < maxIterations; i++) {
+        const { price: P_Eur, delta: Delta_Eur, gamma: Gamma_Eur } = blackScholes(S_star, K, T, r, q, sigma, optionType);
+
+        // 1. Calculate f(S*) (Smooth Pasting Condition)
+        // f(S*) = K - S* - P_Eur(S*) - (S*/m2) * Delta_Eur(S*)
+        let f = K - S_star - P_Eur + (S_star / m) * (1+Delta_Eur); 
+        if(optionType!='put'){
+          f = S_star - K - P_Eur - (S_star / m) * (1-Delta_Eur);
+        }
+        // 2. Calculate f'(S*) (Derivative of f)
+        // f'(S*) = -1 - Delta_Eur - (1/m2) * (Delta_Eur + S* * Gamma_Eur)
+        let f_prime = -1 - Delta_Eur + (1.0 / m) * ((1+Delta_Eur) + S_star * Gamma_Eur);
+        if(optionType!='put'){
+          f_prime = 1 - Delta_Eur - (1.0 / m) * ((1-Delta_Eur) - S_star *  Gamma_Eur);
+        }
+        // 3. Newton-Raphson Update: S*_next = S* - f(S*) / f'(S*)
+        const S_star_next = S_star - f / f_prime;
+
+        // Critical Check: Check for convergence and stability
+        if (Math.abs(S_star_next - S_star) < epsilon) {
+            return S_star_next;
+        }
+
+        // Check for divergence/NaN
+        if (!isFinite(S_star_next) || S_star_next <= 0) {
+            // Convergence failed dramatically; return K as default or throw error
+            return K;
+        }
+        
+        S_star = S_star_next;
+    }
+
+    // Return the last calculated value if max iterations reached
+    return S_star; 
+}
+
+// 5. Main BAW Pricing Function
+function bawAmericanOption(S, K, T, r, q, sigma, optionType) {
+      if(T<0.000001){T=0.000001;}
+        if(sigma<0.000001){sigma=0.000001;}
+        if(S<0.000001){S=0.000001;}
+        if(K<0.000001){K=0.000001;}
+        if(r>1.0){r=1.0;}
+        if(q>1.0){q=1.0;}
+        if(r<-1.0){r=-1.0;}
+        if(q<-1.0){q=-1.0;}
+        //BAW's approximation doesn't allow r=0
+        if(r<0.001 && r>=0.0){
+        r=0.001;}
+        if(r>-0.001 && r<0.0){
+        r=-0.001;}
+
+
+
+
+    if (T <= 0) return Math.max(0, (optionType === 'put') ? K - S : S - K);
+    
+    const { m1, m2 } = getM(r, q, sigma,T);
+    const m = (optionType === 'put') ? m1 : m2;
+    
+    // 1. Find the critical price S* using Newton-Raphson
+    const S_star = bawCriticalPrice(K, T, r, q, sigma, m, optionType);
+
+    // 2. Calculate European price at S
+    const { price: EurPrice } = blackScholes(S, K, T, r, q, sigma, optionType);
+    
+    // 3. Calculate A2 and Final Price
+    let intrinsicValue = K - S;
+    if(optionType != 'put'){
+      intrinsicValue = S - K
+    }
+    const { price: EurPrice_S_star,delta: putDelta } = blackScholes(S_star, K, T, r, q, sigma, optionType);
+    
+
+    const A1=-S_star/m*(1+putDelta); 
+    
+    // P_Am = P_Eur + A1 * (S/S*)^m
+    let AmPrice = EurPrice + A1 * Math.pow(S / S_star, m);
+    if(optionType != 'put'){
+      const A2=S_star/m*(1-putDelta); 
+      AmPrice = EurPrice + A2 * Math.pow(S / S_star, m);
+    }
+    // Final Price is always max(Intrinsic Value, Continuation Value)
+    if(optionType === 'put'){
+      AmPrice = (S<=S_star)?intrinsicValue:AmPrice;
+    }
+    else{
+      AmPrice = (S>=S_star)?intrinsicValue:AmPrice;
+    }
+    AmPrice=Math.max(AmPrice,0);
+    return AmPrice;
+}
+
+	function Calculate()
+	{
+		var S = eval(document.isForm.S.value);
+		var K = eval(document.isForm.K.value);
+		var T = eval(document.isForm.T.value);
+		var r = eval(document.isForm.r.value);
+		var s = eval(document.isForm.s.value);
+    var q = eval(document.isForm.q.value);
+    if(T<0.000001){T=0.000001;}
+    if(s<0.000001){s=0.000001;}
+    if(S<0.000001){S=0.000001;}
+    if(K<0.000001){K=0.000001;}
+    if(r>1.0){r=1.0;}
+    if(q>1.0){q=1.0;}
+    if(r<-1.0){r=-1.0;}
+    if(q<-1.0){q=-1.0;}
+    //if (isCall===1){ optionType='call'}
+    //else{optionType='put'}
+    //only support put
+    optionType='put'
+		document.isForm.p.value =  bawAmericanOption(S, K, T, r, q, s, optionType);
+    optionType='call'
+		document.isForm.c.value =  bawAmericanOption(S, K, T, r, q, s, optionType);
+	}
+ 	function Reset()
+        {
+                document.isForm.S.value="80";
+                document.isForm.K.value="100";
+                document.isForm.T.value="0.25";
+                document.isForm.r.value="0.08";
+                document.isForm.s.value="0.2";
+                document.isForm.q.value="0.12";
+
+		            document.isForm.c.value = "";
+                document.isForm.p.value = "";
+
+
+        }
+</script>
+
+
+<form name="isForm">
+<p><B>American option</B></p>
+<table border=0>
+<tr><td><b>Input:</b></td><td>
+<tr><td>Initial underlying asset price		</td><td><input name="S" value="80"></td><td></td></tr>
+<tr><td>Strike price				</td><td><input name="K" value="100"></td><td></td></tr>
+<tr><td>Time to maturity			</td><td><input name="T" value="0.25"></td><td>Years</td></tr>
+<tr><td>Risk free interest rate (annulized)	</td><td><input name="r" value="0.08"></td><td></td></tr>
+<tr><td>Dividend yield (annulized)	</td><td><input name="q" value="0.12"></td><td></td></tr>
+<tr><td>Volatility (annulized)			</td><td><input name="s" value="0.2"></td><td></td></tr>
+<tr><td><b>Output:</b></td><td>
+<tr><td>Call option value</td><td><input name="c" value="" onFocus="blur();"></td><td></td></tr>
+<tr><td>Put option value</td><td><input name="p" value="" onFocus="blur();"></td><td></td></tr>
+</table>
+<p>
+<input type=button name="reset" value="Reset" onClick="Reset();return true;">
+<input type=button name="go" value="Calculate" onClick="Calculate();return true;">
+</p>
+</form>
+
+<font size=-1>The calculation is based on Barone-Adesi and Whaley.</font>
+
+          <p>Tagged: <a href="paper/Barone_Adesi___Whaley__1987__Pricing_Formulas_Review.pdf">Barone-Adesi and Whaley Review</a>, <a href="Barone_Adesi___Whaley__1987__Pricing_Formulas_Review.pdf">Barone-Adesi-Whaley(BAW) American Option</a>
+          <p>  <span>&nbsp;&bull;&nbsp;</span> Nov  26, 2025  <span>&nbsp;&bull;&nbsp;</span>  </p>
+        </div>
+        
+
+
+      </div>
+      <div class="sidebar">
+        <div class="searchform">
+
+        </div>
+        <div class="gadget">
+          <h2 class="star"><span>Methods</span></h2><div class="clr"></div>
+          <ul class="sb_menu">
+            
+            <li><a href="AnalyticSolution.html">Analytic Solutions</a></li>
+            <li><a href="MonteCarlo.html">Monte Carlo methods</a></li>
+            <li><a href="NPDE.html">Numerical PDE Methods</a></li>
+            <li><a href="Tree.html">Tree Methods</a></li>
+            <li><a href="FFT.html">FFT Based Pricing Methods</a></li>
+
+          </ul>
+        </div>
+        <div class="gadget">
+          <h2 class="star"><span>Derivatives Markets</span></h2><div class="clr"></div>
+          <ul class="ex_menu">
+            <li><a href="Stock.html" title="stock Options">Stock Options</a><br />Including Exotic Options</li>
+            <li><a href="InterestRate.html">Interest Rate Derivatives</a><br />Short Rate Model</li>
+            <li><a href="Credit.html" title="Credit Derivatives">Credit Derivatives</a><br />structural Models and Reduced Models</li>
+
+          </ul>
+        </div>
+      </div>
+      <div class="clr"></div>
+    </div>
+  </div>
+
+  
+
+</div>
+<div style="text-align:center">Copyright 2012-2026</div>
+</html>

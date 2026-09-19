@@ -1,0 +1,132 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
+<head>  <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-N0YL0FX070"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-N0YL0FX070');
+</script>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1337506067911632"
+  crossorigin="anonymous"></script>
+<title>the Financial Math Calculator</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link href="style.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="js/BDTCali.js"></script>
+<!--<script type="text/javascript" src="js/testClass.js"></script>-->
+<script type="text/javascript" src="js/BDTSwaption.js"></script>
+<script type="text/javascript" src="js/ClassBDTCali.js"></script>
+<script type="text/javascript" src="js/ClassRootFinding.js"></script>
+</head>
+<body>
+<div class="main">
+
+  <div class="header">
+    <div class="header_resize">
+      <div class="logo"><h1><a href="index.html">Quant<span>Calc</span> <small>the calculator for all quants</small></a></h1></div>
+      <div class="menu_nav">
+        <ul>
+          <li ><a href="index.html">Home</a></li>
+          <li class="active"><a href="pricing.html">Pricing</a></li>
+          <li><a href="calibration.html">Calibration</a></li>
+          <li><a href="paper.html">Paper</a></li><li><a href="risk.html">Risk Management</a></li>
+          <li><a href="about.html">About us</a></li>
+          <li><a href="contact.html">Contact us</a></li>
+        </ul>
+      </div>
+      <div class="clr"></div>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="content_resize">
+      <div class="mainbar">
+        <div class="article">
+          <h2>Pricing swaption by the Black-Derman-Toy model </h2><div class="clr"></div>
+          <p>Posted by <a href="contact.html">Gary Pai</a> 
+
+          
+          
+          
+          
+          
+          
+          
+
+
+<form name="isForm">
+<p><B> Generate the tree of interest rate</B></p>
+<table border=0>
+<tr><td><b>Input:</b></td><td>
+<tr><td>Yield of 1 year		</td><td><input name="S1" value="0.06"></td><td></td></tr>
+<tr><td>Yield of 2 year		</td><td><input name="S2" value="0.06"></td><td></td></tr>
+<tr><td>Yield of 3 year		</td><td><input name="S3" value="0.06"></td><td></td></tr>
+<tr><td>Yield of 4 year		</td><td><input name="S4" value="0.06"></td><td></td></tr>
+<tr><td>Yield of 5 year		</td><td><input name="S5" value="0.06"></td><td></td></tr>
+<tr><td>Volatility of 1 year yield		</td><td><input name="k1" value="0.20"></td><td></td></tr>
+<tr><td>Volatility of 2 year yield		</td><td><input name="k2" value="0.20"></td><td></td></tr>
+<tr><td>Volatility of 3 year yield		</td><td><input name="k3" value="0.20"></td><td></td></tr>
+<tr><td>Volatility of 4 year yield		</td><td><input name="k4" value="0.20"></td><td></td></tr>
+<tr><td>Volatility of 5 year yield		</td><td><input name="k5" value="0.20"></td><td></td></tr>
+<tr><td>Nominal amount		</td><td><input name="N" value="100"></td><td></td></tr>
+<tr><td>Time to maturity of option		</td><td><input name="T" value="1"></td><td></td></tr>
+<tr><td>Tenor of swap		</td><td><input name="Ts" value="4"></td><td></td></tr>
+<tr><td>Strike interest rate		</td><td><input name="X" value="0.062"></td><td></td></tr>
+
+<tr><td><b>Output:</b></td><td>
+<tr><td>Price of swaption: </td></tr>
+<tr><td><input name="price" value=""></td><td></td></tr>
+
+</table>
+<p>
+<input type=button name="reset" value="Reset" onClick="Reset();return true;">
+<input type=button name="go" value="Calculate" onClick="Calculate();return true;">
+</p>
+</form>
+
+<font size=-1>The Calibration follows <a href="http://savage.wharton.upenn.edu/FNCE-934/syllabus/papers/Black_Derman_Toy_FAJ_90.pdf">Black, Derman and Toy's paper</a> .</font>
+
+          <p>Keywords: <a href="contact.html">Binomial tree</a>, <a href="contact.html">No Paper interest rate model</a>, <a href="contact.html">Swaption calculator</a>
+          <p>  <span>&nbsp;&bull;&nbsp;</span> April  28, 2013  <span>&nbsp;&bull;&nbsp;</span>  </p>
+        </div>
+        
+
+
+      </div>
+      <div class="sidebar">
+        <div class="searchform">
+
+        </div>
+        <div class="gadget">
+          <h2 class="star"><span>Methods</span></h2><div class="clr"></div>
+          <ul class="sb_menu">
+            
+            <li><a href="AnalyticSolution.html">Analytic Solutions</a></li>
+            <li><a href="MonteCarlo.html">Monte Carlo methods</a></li>
+             <li><a href="NPDE.html">Numerical PDE Methods</a></li>
+            <li><a href="Tree.html">Tree Methods</a></li>
+            <li><a href="FFT.html">FFT Based Pricing Methods</a></li>
+          </ul>
+        </div>
+        <div class="gadget">
+          <h2 class="star"><span>Derivatives Markets</span></h2><div class="clr"></div>
+          <ul class="ex_menu">
+            <li><a href="Stock.html" title="stock Options">Stock Options</a><br />Including Exotic Options</li>
+            <li><a href="InterestRate.html">Interest Rate Derivatives</a><br />Short Rate Model</li>
+            <li><a href="Credit.html" title="Credit Derivatives">Credit Derivatives</a><br />structural Models and Reduced Models</li>
+
+          </ul>
+        </div>
+      </div>
+      <div class="clr"></div>
+    </div>
+  </div>
+
+
+
+</div>
+<div style="text-align:center">Copyright 2012-2026</div>
+</html>
