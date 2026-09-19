@@ -1,0 +1,180 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
+<head>  <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-N0YL0FX070"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-N0YL0FX070');
+</script>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1337506067911632"
+  crossorigin="anonymous"></script>
+<title>the Financial Math Calculator</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link href="style.css" rel="stylesheet" type="text/css" />
+
+</head>
+<body>
+<div class="main">
+
+  <div class="header">
+    <div class="header_resize">
+      <div class="logo"><h1><a href="index.html">Quant<span>Calc</span> <small>the calculator for all quants</small></a></h1></div>
+      <div class="menu_nav">
+        <ul>
+          <li ><a href="index.html">Home</a></li>
+          <li class="active"><a href="pricing.html">Pricing</a></li>
+          <li><a href="calibration.html">Hedging</a></li>
+          <li><a href="paper.html">Paper</a></li>
+          <li><a href="risk.html">Risk Management</a></li>
+          <li><a href="about.html">About us</a></li>
+          <li><a href="contact.html">Contact us</a></li>
+        </ul>
+      </div>
+      <div class="clr"></div>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="content_resize">
+      <div class="mainbar">
+        <div class="article">
+          <h2><span>American Put Option</span> Price</h2><div class="clr"></div>
+          <p>Posted by <a href="contact.html">Chun-Yuan Chiu</a> <span>&nbsp;&bull;&nbsp;</span> <a href="contact.html"> Gary Pai</a>  <span>&nbsp;&bull;&nbsp;</span>  Filed under <a href="contact.html">Derivatives Pricing</a></p>
+
+          
+          
+          
+          
+          
+          
+          
+<script type="text/javascript">
+    
+
+
+    function Calculate() {
+        var S = eval(document.isForm.S.value);
+        var K = eval(document.isForm.K.value);
+        var T = eval(document.isForm.T.value);
+        var r = eval(document.isForm.r.value);
+        var s = eval(document.isForm.s.value);
+        var n = eval(document.isForm.n.value);
+
+        var u = Math.exp(s * Math.sqrt(T/n));
+        var d = 1 / u;
+        var p = (Math.exp(r*T/n) - d)/(u-d);
+        var put = new Array(n + 1);
+        var currentS = new Array(n + 1);
+
+        currentS[0] = S * Math.pow(u, n);
+        for (i = 0; i <= n; i++) {
+            put[i] = Math.max(0, K - currentS[i]);
+            currentS[i + 1] = currentS[i] * d * d;
+        }
+        for (i = n; i > 0; i--) {
+            for (j = 0; j < i; j++) {
+                put[j] = Math.exp(-r * T / n) * (p * put[j] + (1 - p) * put[j + 1]);
+                currentS[j] *= d;
+                put[j] = Math.max(put[j], K - currentS[j]);
+            }
+        }
+
+        document.isForm.put.value = put[0];
+    }
+    function Reset() {
+        document.isForm.S.value = "100";
+        document.isForm.K.value = "120";
+        document.isForm.T.value = "1";
+        document.isForm.r.value = "0.1";
+        document.isForm.s.value = "0.3";
+        document.isForm.n.value = "1000";
+        document.isForm.put.value = "";
+    }
+    function NormalCDF(x) {
+        var L;
+        var K;
+        var w;
+        /* absolute error  < 7.5e-8 */
+        var a1 = 0.31938153;
+        var a2 = -0.356563782;
+        var a3 = 1.781477937;
+        var a4 = -1.821255978;
+        var a5 = 1.330274429;
+        L = Math.abs(x);
+        K = 1.0 / (1.0 + 0.2316419 * L);
+        w = 1.0 - 1.0 / Math.sqrt(2 * Math.PI) * Math.exp(-L * L / 2) * (K * (a1 + K * (a2 + K * (a3 + K * (a4 + a5 * K)))));
+        if (x < 0) {
+            w = 1.0 - w;
+        }
+        return (w);
+    }
+</script>
+
+
+<form name="isForm">
+<p><B>American Put Option Price</B></p>
+<table border=0>
+<tr><td><b>Input:</b></td><td>
+<tr><td>Initial underlying asset price		</td><td><input name="S" value="100"></td><td></td></tr>
+<tr><td>Strike price				</td><td><input name="K" value="120"></td><td></td></tr>
+<tr><td>Time to maturity			</td><td><input name="T" value="1"></td><td>Years</td></tr>
+<tr><td>Risk free interest rate (annulized)	</td><td><input name="r" value="0.1"></td><td></td></tr>
+<tr><td>Volatility (annulized)			</td><td><input name="s" value="0.3"></td><td></td></tr>
+<tr><td>Number of time steps			</td><td><input name="n" value="1000"></td><td></td></tr>
+
+<tr><td><b>Output:</b></td><td>
+<tr><td>Put value</td><td><input name="put" value="" onFocus="blur();"></td><td></td></tr>
+</table>
+<p>
+<input type=button name="reset" value="Reset" onClick="Reset();return true;">
+<input type=button name="go" value="Calculate" onClick="Calculate();return true;">
+</p>
+</form>
+
+<font size=-1>The calculation is based on binomial option pricing model.</font>
+
+          <p>Tagged: <a href="contact.html">Binomial Tree</a>, <a href="contact.html">American Option</a>
+          <p>  <span>&nbsp;&bull;&nbsp;</span> Dec 30, 2012  <span>&nbsp;&bull;&nbsp;</span>  </p>
+        </div>
+        
+
+
+      </div>
+      <div class="sidebar">
+        <div class="searchform">
+
+        </div>
+        <div class="gadget">
+          <h2 class="star"><span>Methods</span></h2><div class="clr"></div>
+          <ul class="sb_menu">
+            
+            <li><a href="AnalyticSolution.html">Analytic Solutions</a></li>
+            <li><a href="MonteCarlo.html">Monte Carlo Methods</a></li>
+            <li><a href="NPDE.html">Numerical PDE Methods</a></li>
+            <li><a href="Tree.html">Tree Methods</a></li><li><a href="FFT.html">FFT Based Pricing Methods</a></li>
+
+          </ul>
+        </div>
+        <div class="gadget">
+          <h2 class="star"><span>Derivatives Markets</span></h2><div class="clr"></div>
+          <ul class="ex_menu">
+            <li><a href="Stock.html" title="stock Options">Stock Options</a><br />Including Exotic Options</li>
+            <li><a href="InterestRate.html">Interest Rate Derivatives</a><br />Short Rate Model</li>
+            <li><a href="Credit.html" title="Credit Derivatives">Credit Derivatives</a><br />structural Models and Reduced Models</li>
+
+          </ul>
+        </div>
+      </div>
+      <div class="clr"></div>
+    </div>
+  </div>
+
+  
+
+</div>
+<div style="text-align:center">Copyright 2012-2026</div>
+</html>
