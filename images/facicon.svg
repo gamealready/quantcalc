@@ -1,0 +1,11 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="256" cy="256" r="240" fill="#111827"/>
+  
+  <path d="M150 256C150 197.458 197.458 150 256 150C285.271 150 311.521 161.875 330.417 181.042" stroke="#4ADE80" stroke-width="30" stroke-linecap="round"/>
+  <path d="M330 140L350 185L305 205" fill="#4ADE80"/>
+  
+  <text x="50%" y="62%" dominant-baseline="middle" text-anchor="middle" font-family="Arial, sans-serif" font-weight="bold" font-size="220" fill="white">QC</text>
+  
+  <circle cx="380" cy="256" r="20" fill="#22D3EE"/>
+  <rect x="340" y="250" width="40" height="12" rx="6" fill="#22D3EE"/>
+</svg>
