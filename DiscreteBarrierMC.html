@@ -1,0 +1,191 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
+<head>  <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-N0YL0FX070"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-N0YL0FX070');
+</script>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1337506067911632"
+  crossorigin="anonymous"></script>
+<title>the Financial Math Calculator</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link href="style.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="js/BDTCali.js"></script>
+<!--<script type="text/javascript" src="js/testClass.js"></script>-->
+<script type="text/javascript" src="js/MC.js"></script>
+<script type="text/javascript" src="js/DiscreteBarrierMC.js"></script>
+
+<script type="text/javascript" src="js/jquery-1.7.1.js"></script>
+
+<script language="JavaScript">
+$(document).ready(function() {
+   $('div.more').hide();
+   $('div.mor2e').hide();
+   $('a.more-options').click(function() {
+      if ($('div.more').is(':hidden'))
+         $('div.more').slideDown('slow');
+      else
+         $('div.more').slideUp('slow');   
+      return false;
+   });   
+});
+</script>
+
+
+</head>
+<body>
+<div class="main">
+
+  <div class="header">
+    <div class="header_resize">
+      <div class="logo"><h1><a href="index.html">Quant<span>Calc</span> <small>the calculator for all quants</small></a></h1></div>
+      <div class="menu_nav">
+        <ul>
+          <li ><a href="index.html">Home</a></li>
+          <li class="active"><a href="pricing.html">Pricing</a></li>
+          <li><a href="calibration.html">Calibration</a></li>
+          <li><a href="paper.html">Paper</a></li><li><a href="risk.html">Risk Management</a></li>
+          <li><a href="about.html">About us</a></li>
+          <li><a href="contact.html">Contact us</a></li>
+        </ul>
+      </div>
+      <div class="clr"></div>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="content_resize">
+      <div class="mainbar">
+        <div class="article">
+          <h2>Discrete Barrier Options by Monte Carlo Method </h2><div class="clr"></div>
+          <p>Posted by <a href="contact.html">Gary Pai</a> 
+
+   <!--       
+<div id="search">
+  <h2>Slide to Show more</h2>
+  <input type="text" width="50"/>
+  <input type="submit" value="Search"/><br/>
+  <a href="#" class="more-options">search more</a>  
+  <div class="more">
+     <input type="radio" name="category"/>chinese page<br/> 
+     <input type="radio" name="category"/>English Page<br/> 
+     <input type="checkbox" name="language"/>Include T and S<br/>
+  </div>
+</div>
+        -->  
+          
+          
+          
+<p><b>Input:</b></p>       
+<p><a href="#" class="more-options" background= yellow>Show inputs of Monte Carlo Method</a>
+
+<form name="isForm">
+
+<div class="more">
+<table border=1  rgb(109, 2, 107) ; cellpadding="6" rules="none">
+
+<tr><td>Number of iterations		</td><td><input name="NS" value="1000"></td><td></td></tr>
+<tr><td>Number of time partitions		</td><td><input name="Ni" value="100"></td><td></td></tr>
+
+
+
+</table>
+</div>
+
+
+<table border=0>
+
+<tr><td>Initial underlying asset price		</td><td><input name="S" value="95"></td><td></td></tr>
+<tr><td>Strike price		</td><td><input name="X" value="100"></td><td></td></tr>
+<tr><td>Time to maturity			</td><td><input name="T" value="1"></td><td>Years</td></tr>
+<tr><td>Interest rate of domestic currency(annulized)	</td><td><input name="r" value="0.1"></td><td></td></tr>
+<tr><td>Interest rate of foreign currency(annulized)	</td><td><input name="rf" value="0"></td><td></td></tr>
+<tr><td>Volatility (annulized)			</td><td><input name="sigma" value="0.25"></td><td></td></tr>
+<tr><td>Barrier			</td><td><input name="H" value="90"></td><td></td></tr>
+<tr><td>Rebate		</td><td><input name="K" value="20"></td><td></td></tr>
+
+<tr><td>Knock-in or knock-out		</td>      <td colspan="1" rowspan="1"> 
+              <select style="width:155px"  name="Knock"><option value="1">Knock-out</option><option value="0">Knock-in</option></select>       
+      </td><td></td></tr>
+
+<tr><td>Option type		</td>      <td colspan="1" rowspan="1"> 
+              <select style="width:155px"  name="Phi"><option value="1">Call</option><option value="-1">Put</option></select>       
+      </td><td></td></tr>
+      
+<tr><td>Rebate type		</td>      <td colspan="1" rowspan="1"> 
+              <select style="width:155px"  name="NorT"><option value="0">Rebate when hitting</option><option value="1">Rebate at when expiring</option></select>       
+      </td><td></td></tr>
+
+<tr><td>Discrete barrier type		</td>      <td colspan="1" rowspan="1"> 
+              <select style="width:155px"  name="DT"><option value="0">semi-annually</option><option value="1">quarterly</option><option value="2">monthly</option></select>       
+      </td><td></td></tr>
+
+<tr><td>Monitor		</td>      <td colspan="1" rowspan="1"> 
+              <select style="width:155px"  name="DayOrClose"><option value="0">all day</option><option value="1">end of day</option></select>       
+      </td><td></td></tr>
+</table>
+
+
+
+<table border=0>
+
+<tr><td><b>Output:</b></td><td>
+<tr><td>Price of Option: </td></tr>
+<tr><td><input name="price" value=""></td><td></td></tr>
+
+</table>
+
+<p>
+<input type=button name="reset" value="Reset" onClick="Reset();return true;">
+<input type=button name="go" value="Calculate" onClick="Calculate();return true;">
+</p>
+</form>
+
+<font size=-1>The we use Monte Carlo method to price discrete barrier option.</font>
+
+          <p>Keywords: <a href="contact.html">discrete barrier option calculator</a>, <a href="contact.html">FX</a>, <a href="contact.html">Foreign exchange derivatives</a>
+          <p>  <span>&nbsp;&bull;&nbsp;</span> May  26, 2013  <span>&nbsp;&bull;&nbsp;</span>  </p>
+        </div>
+        
+
+
+      </div>
+      <div class="sidebar">
+        <div class="searchform">
+
+        </div>
+        <div class="gadget">
+          <h2 class="star"><span>Methods</span></h2><div class="clr"></div>
+          <ul class="sb_menu">
+            
+            <li><a href="AnalyticSolution.html">Analytic Solutions</a></li>
+            <li><a href="MonteCarlo.html">Monte Carlo methods</a></li>
+             <li><a href="NPDE.html">Numerical PDE Methods</a></li>
+            <li><a href="Tree.html">Tree Methods</a></li>
+            <li><a href="FFT.html">FFT Based Pricing Methods</a></li>
+          </ul>
+        </div>
+        <div class="gadget">
+          <h2 class="star"><span>Derivatives Markets</span></h2><div class="clr"></div>
+          <ul class="ex_menu">
+            <li><a href="Stock.html" title="stock Options">Stock Options</a><br />Including Exotic Options</li>
+            <li><a href="InterestRate.html">Interest Rate Derivatives</a><br />Short Rate Model</li>
+            <li><a href="Credit.html" title="Credit Derivatives">Credit Derivatives</a><br />structural Models and Reduced Models</li>
+
+          </ul>
+        </div>
+      </div>
+      <div class="clr"></div>
+    </div>
+  </div>
+
+
+
+</div>
+<div style="text-align:center">Copyright 2012-2026</div>
+</html>
