@@ -1,0 +1,1 @@
+Run "node BS2002_unit_test.js" in terminal
