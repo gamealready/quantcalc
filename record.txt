@@ -1,0 +1,10 @@
+我現在用的是: 
+介面頁DerivativeMethodModel.html; 
+執行檔DerivativeMethodModel.js; 
+物件ClassMethod.js 
+有什麼建議再跟我說
+如果Model是BS就省略 
+Method是Analytic 也省略
+
+Balance:
+$35

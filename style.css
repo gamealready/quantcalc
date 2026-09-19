@@ -1,0 +1,114 @@
+/* -------------------------------------------------------
+   QuantCalc Modern Redesign (2025)
+   Keep old layout + structure, update visuals only.
+-------------------------------------------------------- */
+
+/* Global Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #f4f7fb;
+    font-family: "Inter", "Segoe UI", Arial, sans-serif;
+    color: #222;
+    line-height: 1.6;
+}
+
+/* Main container */
+.main {
+    width: 100%;
+    margin: 0 auto;
+}
+
+/* ---------------- HEADER ---------------- */
+
+.header {
+    background: #0b1220;
+    padding: 12px 0;
+    border-bottom: 1px solid #111a33;
+}
+
+.header_resize {
+    width: 1080px;
+    margin: auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo h1 a {
+    color: #fff;
+    text-decoration: none;
+    font-weight: 800;
+    font-size: 28px;
+}
+
+.logo h1 span {
+    color: #39a0ed;
+}
+
+.logo small {
+    display: block;
+    font-size: 12px;
+    color: #aab4c6;
+    font-weight: 400;
+}
+
+/* Navigation bar */
+.menu_nav ul {
+    list-style: none;
+    display: flex;
+    gap: 22px;
+}
+
+.menu_nav ul li a {
+    text-decoration: none;
+    color: #dfe7f1;
+    font-weight: 600;
+    padding: 6px 2px;
+    transition: 0.2s ease;
+}
+
+.menu_nav ul li:hover a,
+.menu_nav ul li.active a {
+    color: #39a0ed;
+    border-bottom: 2px solid #39a0ed;
+}
+
+/* ---------------- CONTENT AREA ---------------- */
+
+.content {
+    padding: 40px 0;
+}
+
+.content_resize {
+    width: 1080px;
+    margin: auto;
+    display: flex;
+    gap: 25px;
+}
+
+/* Main content */
+.mainbar {
+    width: 70%;
+}
+
+/* General article style */
+.article {
+    background: #ffffff;
+    padding: 22px;
+    border-radius: 10px;
+    margin-bottom: 26px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+    border: 1px solid #e3e8ef;
+}
+
+/* Titles */
+.article h2 {
+    color: #0b1220;
+    font-size: 24px;
+    margin-bottom: 12px;
+    font-

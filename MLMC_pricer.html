@@ -1,0 +1,183 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
+<head>  <script async src="https://www.googletagmanager.com/gtag/js?id=G-N0YL0FX070"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-N0YL0FX070');
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
+<script type="text/javascript" src="js/MLMC.js"></script>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1337506067911632"
+  crossorigin="anonymous"></script>
+<title>Autocallable Structured Note Pricer with MLMC</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link href="style.css" rel="stylesheet" type="text/css" />
+
+</head>
+<script src="https://cdn.jsdelivr.net/npm/jstat@1.9.3/dist/jstat.min.js"></script>
+<body>
+<div class="main">
+
+  <div class="header">
+    <div class="header_resize">
+      <div class="logo"><h1><a href="index.html">Quant<span>Calc</span> <small>the calculator for all quants</small></a></h1></div>
+      <div class="menu_nav">
+        <ul>
+          <li ><a href="index.html">Home</a></li>
+          <li class="active"><a href="pricing.html">Pricing</a></li>
+          <li><a href="calibration.html">Hedging</a></li>
+          <li><a href="paper.html">Paper</a></li><li><a href="risk.html">Risk Management</a></li>
+          <li><a href="about.html">About us</a></li>
+          <li><a href="contact.html">Contact us</a></li>
+        </ul>
+      </div>
+      <div class="clr"></div>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="content_resize">
+      <div class="mainbar">
+        <div class="article">
+          <h2><span>Autocallable Structured Note Pricer with MLMC</span></h2><div class="clr"></div>
+          <p>Posted by <a href="contact.html">Gary Pai</a></p>
+
+          
+          
+          
+          
+          
+          
+          
+<script type="text/javascript">
+
+
+
+
+/**
+ * Public function to handle UI and Calculation.
+ */
+function Calculate()
+{
+
+
+    // Get inputs and parse them
+    const S = parseFloat(document.isForm.S.value);
+    const K = parseFloat(document.isForm.K.value);
+    const T = parseFloat(document.isForm.T.value);
+    const r = parseFloat(document.isForm.r.value);
+    const s = parseFloat(document.isForm.s.value);
+    const q = parseFloat(document.isForm.q.value);
+    const L_max = parseFloat(document.isForm.L_max.value);
+    const p_barrier = parseFloat(document.isForm.p_barrier.value);
+    const N_base = parseFloat(document.isForm.N_base.value);
+
+    resultValue = runPricer(S, K, T, s, r, q, L_max, p_barrier, N_base);
+    document.isForm.c.value=resultValue;
+
+};
+
+function Reset()
+{
+    document.isForm.S.value="80";
+    document.isForm.K.value="100";
+    document.isForm.T.value="0.25";
+    document.isForm.r.value="0.08";
+    document.isForm.s.value="0.2";
+    document.isForm.q.value="0.12";
+    document.isForm.r.value="0.08";
+    document.isForm.L_max.value="3";
+    document.isForm.p_barrier.value="100";
+    document.isForm.N_base.value="10000";
+
+
+
+}
+</script>
+
+
+<form name="isForm">
+  <ul>
+    <li>
+      <strong>The Autocall Level (The "Exit"):</strong> At pre-defined observation dates (quarterly in our code), the spot price of the underlying asset (S) is compared to the Strike (K). If S ≥ K, the contract "calls" automatically. The investor receives their initial principal plus a pro-rated coupon and the contract terminates.
+    </li>
+
+    <li>
+      <strong>The Contingent Coupon (q):</strong> This is the "reward." Unlike a standard bond that pays regardless of market conditions, this coupon is often only paid if the note autocalls or if the asset remains above a certain level.
+    </li>
+
+    <li>
+      <strong>The Protection Barrier (p):</strong> This is the "safety net." If the note is never called and reaches maturity (T), the investor is still protected as long as the asset price hasn't fallen below the barrier (e.g., 70% of the initial price).
+    </li>
+  </ul>
+<table border=0>
+<tr><td><b>Input:</b></td><td>
+<tr><td>Initial underlying asset price		</td><td><input name="S" value="100"></td><td></td></tr>
+<tr><td>Autocall Level				</td><td><input name="K" value="100"></td><td></td></tr>
+<tr><td>Time to maturity			</td><td><input name="T" value="1"></td><td>Years</td></tr>
+<tr><td>Risk free interest rate (annulized)	</td><td><input name="r" value="0.05"></td><td></td></tr>
+<tr><td>Coupon Rate (q)	</td><td><input name="q" value="0.12"></td><td></td></tr>
+<tr><td>Volatility (annulized)			</td><td><input name="s" value="0.2"></td><td></td></tr>
+<tr><td>Max Level	(typically 3 to 5)</td><td><input name="L_max" value="3"></td><td></td></tr>
+<tr><td>Protection Barrier	(p)		</td><td><input name="p_barrier" value="100"></td><td></td></tr>
+<tr><td>Base Samples	(int >500)</td><td><input name="N_base" value="10000"></td><td></td></tr>
+
+<tr><td><b>Output:</b></td><td>
+<tr><td>Autocallable value</td><td><input name="c" value="" onFocus="blur();"></td><td></td></tr>
+
+</table>
+<p>
+<input type=button name="reset" value="Reset" onClick="Reset();return true;">
+<input type=button name="go" value="Calculate" onClick="Calculate();return true;">
+</p>
+</form>
+
+<font size=-1>The calculation is based on MLMC.</font>
+
+          <p>Tagged: <a href="paper/Multilevel_Monte_Carlo__MLMC_.pdf">Multilevel Monte Carlo (MLMC)</a>
+          <p>  <span>&nbsp;&bull;&nbsp;</span> Jan  1, 2025  <span>&nbsp;&bull;&nbsp;</span>  </p>
+        </div>
+        
+
+
+      </div>
+      <div class="sidebar">
+        <div class="searchform">
+
+        </div>
+        <div class="gadget">
+          <h2 class="star"><span>Methods</span></h2><div class="clr"></div>
+          <ul class="sb_menu">
+            
+            <li><a href="AnalyticSolution.html">Analytic Solutions</a></li>
+            <li><a href="MonteCarlo.html">Monte Carlo methods</a></li>
+            <li><a href="NPDE.html">Numerical PDE Methods</a></li>
+            <li><a href="Tree.html">Tree Methods</a></li>
+            <li><a href="FFT.html">FFT Based Pricing Methods</a></li>
+
+          </ul>
+        </div>
+        <div class="gadget">
+          <h2 class="star"><span>Derivatives Markets</span></h2><div class="clr"></div>
+          <ul class="ex_menu">
+            <li><a href="Stock.html" title="stock Options">Stock Options</a><br />Including Exotic Options</li>
+            <li><a href="InterestRate.html">Interest Rate Derivatives</a><br />Short Rate Model</li>
+            <li><a href="Credit.html" title="Credit Derivatives">Credit Derivatives</a><br />structural Models and Reduced Models</li>
+
+          </ul>
+        </div>
+      </div>
+      <div class="clr"></div>
+    </div>
+  </div>
+
+
+
+</div>
+<div style="text-align:center">Copyright 2012-2026</div>
+</html>
