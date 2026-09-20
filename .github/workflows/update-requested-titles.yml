@@ -1,0 +1,48 @@
+name: Update requested titles
+
+on:
+  push:
+    branches:
+      - unique-title
+
+permissions:
+  contents: write
+
+jobs:
+  update-titles:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply requested title changes
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+          import subprocess
+
+          replacements = {
+              Path('about.html'): 'QuantCalc — about',
+              Path('index.html'): 'the Financial Math Calculator',
+          }
+
+          for path, title in replacements.items():
+              text = path.read_text(encoding='utf-8-sig')
+              updated, count = re.subn(
+                  r'<title>.*?</title>',
+                  f'<title>{title}</title>',
+                  text,
+                  count=1,
+                  flags=re.IGNORECASE | re.DOTALL,
+              )
+              if count != 1:
+                  raise SystemExit(f'Expected exactly one title in {path}, found {count}')
+              path.write_text(updated, encoding='utf-8')
+
+          subprocess.run(['git', 'config', 'user.name', 'github-actions[bot]'], check=True)
+          subprocess.run(['git', 'config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com'], check=True)
+          subprocess.run(['git', 'add', 'about.html', 'index.html'], check=True)
+          result = subprocess.run(['git', 'diff', '--cached', '--quiet'])
+          if result.returncode:
+              subprocess.run(['git', 'commit', '-m', 'Restore original index title'], check=True)
+              subprocess.run(['git', 'push'], check=True)
