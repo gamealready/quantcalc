@@ -51,3 +51,67 @@
 		}   
 		return (w);
         }
+
+(function () {
+  function injectSearchStyles() {
+    if (document.getElementById("quantcalc-search-styles")) {
+      return;
+    }
+
+    var style = document.createElement("style");
+    style.id = "quantcalc-search-styles";
+    style.type = "text/css";
+    style.appendChild(document.createTextNode(
+      ".searchform{margin-bottom:20px;}" +
+      ".quantcalc-search-widget{display:flex;gap:8px;align-items:center;background:#ffffff;border:1px solid #dbe3f0;border-radius:10px;padding:10px;box-shadow:0 4px 14px rgba(0,0,0,0.05);}" +
+      ".quantcalc-search-input{flex:1;min-width:0;padding:10px 12px;border:1px solid #c8d4e3;border-radius:8px;font:normal 14px/1.4 Arial,Helvetica,sans-serif;color:#1f2937;}" +
+      ".quantcalc-search-input:focus{outline:none;border-color:#39a0ed;box-shadow:0 0 0 3px rgba(57,160,237,0.15);}" +
+      ".quantcalc-search-button{padding:10px 14px;border:none;border-radius:8px;background:#39a0ed;color:#fff;font:600 14px/1 Arial,Helvetica,sans-serif;cursor:pointer;}" +
+      ".quantcalc-search-button:hover{background:#2287d4;}" +
+      ".quantcalc-search-hint{margin-top:8px;font:normal 12px/1.4 Arial,Helvetica,sans-serif;color:#5b6575;}" +
+      ".quantcalc-search-hint a{color:#2287d4;text-decoration:none;}"
+    ));
+    document.getElementsByTagName("head")[0].appendChild(style);
+  }
+
+  function currentQuery() {
+    var match = window.location.search.match(/[?&]q=([^&]+)/);
+    return match ? decodeURIComponent(match[1].replace(/\+/g, " ")) : "";
+  }
+
+  function injectSearchForm() {
+    var containers = document.getElementsByClassName("searchform");
+    var i;
+    var value = currentQuery()
+      .replace(/&/g, "&amp;")
+      .replace(/"/g, "&quot;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+
+    if (!containers.length) {
+      return;
+    }
+
+    injectSearchStyles();
+
+    for (i = 0; i < containers.length; i += 1) {
+      if (containers[i].getAttribute("data-search-ready") === "true") {
+        continue;
+      }
+
+      containers[i].innerHTML =
+        '<form class="quantcalc-search-widget" action="search.html" method="get">' +
+          '<input class="quantcalc-search-input" type="search" name="q" value="' + value + '" placeholder="Search calculators, models, or methods" />' +
+          '<button class="quantcalc-search-button" type="submit">Search</button>' +
+        "</form>" +
+        '<div class="quantcalc-search-hint"><a href="search.html">Browse all search results</a></div>';
+      containers[i].setAttribute("data-search-ready", "true");
+    }
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", injectSearchForm);
+  } else {
+    injectSearchForm();
+  }
+}());
