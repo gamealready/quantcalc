@@ -1,4 +1,4 @@
-name: Update only requested titles
+name: Update requested titles
 
 on:
   push:
@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Change only the title lines
+      - name: Apply requested title changes
         shell: python
         run: |
           from pathlib import Path
@@ -23,7 +23,7 @@ jobs:
 
           replacements = {
               Path('about.html'): 'QuantCalc — about',
-              Path('index.html'): 'QuantCalc — index',
+              Path('index.html'): 'the Financial Math Calculator',
           }
 
           for path, title in replacements.items():
@@ -42,5 +42,7 @@ jobs:
           subprocess.run(['git', 'config', 'user.name', 'github-actions[bot]'], check=True)
           subprocess.run(['git', 'config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com'], check=True)
           subprocess.run(['git', 'add', 'about.html', 'index.html'], check=True)
-          subprocess.run(['git', 'commit', '-m', 'Update about and index titles'], check=True)
-          subprocess.run(['git', 'push'], check=True)
+          result = subprocess.run(['git', 'diff', '--cached', '--quiet'])
+          if result.returncode:
+              subprocess.run(['git', 'commit', '-m', 'Restore original index title'], check=True)
+              subprocess.run(['git', 'push'], check=True)
