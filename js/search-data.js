@@ -264,22 +264,22 @@ window.quantcalcSearchIndex = [
   },
   {
     "url": "EEandPFENormal.html",
-    "title": "Expected Exposure and Potential Euture Exposure",
+    "title": "Expected Exposure and Potential Future Exposure",
     "section": "Pricing",
     "keywords": [
       "Expected Exposure (EE)",
-      "Potential Euture Exposure (PFE)",
+      "Potential Future Exposure (PFE)",
       "Basel III",
       "Counterparty Risk"
     ]
   },
   {
     "url": "EEandPFEforSwap.html",
-    "title": "Expected Exposure and Potential Euture Exposure for Swap",
+    "title": "Expected Exposure and Potential Future Exposure for Swap",
     "section": "Pricing",
     "keywords": [
       "Expected Exposure (EE)",
-      "Potential Euture Exposure (PFE)",
+      "Potential Future Exposure (PFE)",
       "Basel III",
       "Counterparty Risk"
     ]

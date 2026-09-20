@@ -268,6 +268,9 @@
         if (right.score !== left.score) {
           return right.score - left.score;
         }
+        if (left.title === right.title) {
+          return 0;
+        }
         return left.title < right.title ? -1 : 1;
       });
 
