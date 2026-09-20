@@ -217,9 +217,17 @@
     }).join("");
   }
 
+  function safeDecode(value) {
+    try {
+      return decodeURIComponent(value.replace(/\+/g, " "));
+    } catch (error) {
+      return "";
+    }
+  }
+
   function readQueryParameter() {
     var match = window.location.search.match(/[?&]q=([^&]+)/);
-    return match ? decodeURIComponent(match[1].replace(/\+/g, " ")) : "";
+    return match ? safeDecode(match[1]) : "";
   }
 
   function initSearchPage() {

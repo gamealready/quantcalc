@@ -33,6 +33,7 @@
   .search-empty { background:#f8fbff; border:1px dashed #c8d4e3; border-radius:12px; padding:18px; }
   .search-suggestions { display:flex; flex-wrap:wrap; gap:10px; margin-top:12px; }
   .search-suggestion { background:#f0f7ff; color:#125ea8; }
+  .search-visually-hidden { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
 </style>
 <script type="text/javascript" src="js/caplet.js"></script>
 <script type="text/javascript" src="js/search-data.js"></script>
@@ -67,6 +68,7 @@
           <h2>Search QuantCalc</h2><div class="clr"></div>
           <p>Use exact text matching for page titles and keywords, plus a lightweight vector-style concept map for related methods, markets, and product names.</p>
           <form id="quantcalc-search-page-form" class="search-page-form" action="search.html" method="get">
+            <label class="search-visually-hidden" for="quantcalc-search-page-input">Search QuantCalc</label>
             <input id="quantcalc-search-page-input" type="search" name="q" placeholder="Try swaption, asian option, credit risk, MLMC..." />
             <button type="submit">Search</button>
           </form>

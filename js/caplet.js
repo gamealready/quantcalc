@@ -53,6 +53,14 @@
         }
 
 (function () {
+  function safeDecode(value) {
+    try {
+      return decodeURIComponent(value.replace(/\+/g, " "));
+    } catch (error) {
+      return "";
+    }
+  }
+
   function injectSearchStyles() {
     if (document.getElementById("quantcalc-search-styles")) {
       return;
@@ -69,14 +77,15 @@
       ".quantcalc-search-button{padding:10px 14px;border:none;border-radius:8px;background:#39a0ed;color:#fff;font:600 14px/1 Arial,Helvetica,sans-serif;cursor:pointer;}" +
       ".quantcalc-search-button:hover{background:#2287d4;}" +
       ".quantcalc-search-hint{margin-top:8px;font:normal 12px/1.4 Arial,Helvetica,sans-serif;color:#5b6575;}" +
-      ".quantcalc-search-hint a{color:#2287d4;text-decoration:none;}"
+      ".quantcalc-search-hint a{color:#2287d4;text-decoration:none;}" +
+      ".quantcalc-search-sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}"
     ));
     document.getElementsByTagName("head")[0].appendChild(style);
   }
 
   function currentQuery() {
     var match = window.location.search.match(/[?&]q=([^&]+)/);
-    return match ? decodeURIComponent(match[1].replace(/\+/g, " ")) : "";
+    return match ? safeDecode(match[1]) : "";
   }
 
   function injectSearchForm() {
@@ -101,7 +110,8 @@
 
       containers[i].innerHTML =
         '<form class="quantcalc-search-widget" action="search.html" method="get">' +
-          '<input class="quantcalc-search-input" type="search" name="q" value="' + value + '" placeholder="Search calculators, models, or methods" />' +
+          '<label class="quantcalc-search-sr-only" for="quantcalc-search-input-' + i + '">Search QuantCalc</label>' +
+          '<input id="quantcalc-search-input-' + i + '" class="quantcalc-search-input" type="search" name="q" value="' + value + '" placeholder="Search calculators, models, or methods" aria-label="Search QuantCalc" />' +
           '<button class="quantcalc-search-button" type="submit">Search</button>' +
         "</form>" +
         '<div class="quantcalc-search-hint"><a href="search.html">Browse all search results</a></div>';
