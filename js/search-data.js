@@ -84,15 +84,6 @@ window.quantcalcSearchIndex = [
     ]
   },
   {
-    "url": "BK_ZCB.html",
-    "title": "Vanilla Call Option Price",
-    "section": "Pricing",
-    "keywords": [
-      "Black-Scholes Calculator",
-      "Vanilla Option"
-    ]
-  },
-  {
     "url": "BS76Caplet.html",
     "title": "Caplet Price",
     "section": "Pricing",
@@ -477,7 +468,7 @@ window.quantcalcSearchIndex = [
       "Financial Math",
       "Mathematical Finance",
       "Financial Engineering",
-      "Option Calcu[...]"
+      "Option Calculator"
     ]
   },
   {
