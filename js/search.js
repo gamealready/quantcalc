@@ -117,6 +117,8 @@
         textNorm: normalize(text),
         titleNorm: normalize(item.title),
         summaryNorm: normalize(item.summary),
+        tokens: splitTokens(text),
+        titleTokens: splitTokens(item.title),
         concepts: collectConcepts(text)
       });
     }
@@ -142,10 +144,10 @@
     }
 
     for (i = 0; i < queryTokens.length; i += 1) {
-      if (page.titleNorm.indexOf(queryTokens[i]) !== -1) {
+      if (page.titleTokens.indexOf(queryTokens[i]) !== -1) {
         score += 6;
         tokenMatches += 1;
-      } else if (page.textNorm.indexOf(queryTokens[i]) !== -1) {
+      } else if (page.tokens.indexOf(queryTokens[i]) !== -1) {
         score += 3;
         tokenMatches += 1;
       }

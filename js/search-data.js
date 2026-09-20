@@ -2,7 +2,14 @@ window.quantcalcSearchIndex = [
   {
     "url": "AnalyticSolution.html",
     "title": "Analytic Solutions",
-    "section": "Pricing"
+    "section": "Pricing",
+    "summary": "Closed-form pricing and risk calculators for equity, rates, and credit products",
+    "keywords": [
+      "Analytic pricing",
+      "Black-Scholes",
+      "Interest Rate Models",
+      "Credit Default Swap"
+    ]
   },
   {
     "url": "AsianFFTde.html",
@@ -90,6 +97,7 @@ window.quantcalcSearchIndex = [
     "title": "Caplet Price",
     "section": "Pricing",
     "keywords": [
+      "Black 76",
       "Interest Rate Models",
       "Caplet Calculator"
     ]
@@ -216,7 +224,8 @@ window.quantcalcSearchIndex = [
   },
   {
     "url": "Credit.html",
-    "title": "Credit Derivatives"
+    "title": "Credit Derivatives",
+    "section": "Derivatives Markets"
   },
   {
     "url": "DGA.html",
@@ -485,11 +494,6 @@ window.quantcalcSearchIndex = [
     "url": "contact.html",
     "title": "QuantCalc — contact",
     "summary": "Contact Us"
-  },
-  {
-    "url": "hedging.html",
-    "title": "Calibration",
-    "section": "Calibration"
   },
   {
     "url": "index.html",
