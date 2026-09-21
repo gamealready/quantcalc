@@ -54,8 +54,9 @@ function readNumber(fieldName) {
 }
 
 function readInteger(fieldName) {
-  var value = Math.round(readNumber(fieldName));
-  if (Math.abs(value - readNumber(fieldName)) > 1e-9) {
+  var numericValue = readNumber(fieldName);
+  var value = Math.round(numericValue);
+  if (Math.abs(value - numericValue) > 1e-9) {
     throw new Error(fieldName + " must be an integer.");
   }
   return value;
@@ -64,13 +65,15 @@ function readInteger(fieldName) {
 function buildFractionalCovarianceMatrix(H, T, steps) {
   var dt = T / steps;
   var sigma = new Array(steps);
+  var powers = new Float64Array(steps);
+  for (var i = 0; i < steps; i++) {
+    powers[i] = Math.pow((i + 1) * dt, 2 * H);
+  }
   for (var i = 0; i < steps; i++) {
     sigma[i] = new Float64Array(steps);
-    var t_i = (i + 1) * dt;
-    var tPow = Math.pow(t_i, 2 * H);
     for (var j = 0; j <= i; j++) {
-      var t_j = (j + 1) * dt;
-      var value = 0.5 * (tPow + Math.pow(t_j, 2 * H) - Math.pow(Math.abs(t_i - t_j), 2 * H));
+      var timeDistance = Math.abs(i - j) * dt;
+      var value = 0.5 * (powers[i] + powers[j] - Math.pow(timeDistance, 2 * H));
       sigma[i][j] = value;
       sigma[j][i] = value;
     }
@@ -301,9 +304,9 @@ function Reset() {
 
           <p>The implementation mirrors the PDF structure: build the fractional Brownian covariance matrix, apply Cholesky decomposition, simulate rough-volatility paths, and discount the average terminal payoff from the pseudo-code simulation.</p>
 
-          <p><font size="-1">Leverage note: the PDF pseudo-code approximates the leverage effect by correlating the stock increment with the Gaussian innovations used to build the rough path. This page follows that same discrete-time approximation.</font></p>
+          <p><span style="font-size:smaller;">Leverage note: the PDF pseudo-code approximates the leverage effect by correlating the stock increment with the Gaussian innovations used to build the rough path. This page follows that same discrete-time approximation.</span></p>
 
-          <p><font size="-1">Notes: the page uses browser-side Monte Carlo simulation and the covariance-matrix construction is cubic in the number of time steps. Smaller values of <b>N_steps</b> and <b>N_paths</b> will return results faster. The long-run level <b>m</b> is the mean of log-volatility, not of volatility itself.</font></p>
+          <p><span style="font-size:smaller;">Notes: the page uses browser-side Monte Carlo simulation and the covariance-matrix construction is cubic in the number of time steps. Smaller values of <b>N_steps</b> and <b>N_paths</b> will return results faster. The long-run level <b>m</b> is the mean of log-volatility, not of volatility itself.</span></p>
 
           <p>Tagged: <a href="paper/rough_vol_with_pseudo_code.pdf">Rough Volatility</a>, <a href="paper/rough_vol_with_pseudo_code.pdf">RFSV</a>, <a href="paper/rough_vol_with_pseudo_code.pdf">Monte Carlo</a></p>
           <p>  <span>&nbsp;&bull;&nbsp;</span> First Version: Sep 21, 2026  <span>&nbsp;&bull;&nbsp;</span>  </p>
