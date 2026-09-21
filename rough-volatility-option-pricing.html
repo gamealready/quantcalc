@@ -1,0 +1,143 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>  <!-- Google tag (gtag.js) -->
+<script>
+  window.MathJax = {
+    tex: {
+      inlineMath: [['$', '$'], ['\\(', '\\)']]
+    }
+  };
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-N0YL0FX070"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-N0YL0FX070');
+</script>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1337506067911632"
+  crossorigin="anonymous"></script>
+<title>Rough Volatility Option Pricing</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link href="style.css" rel="stylesheet" type="text/css" />
+
+</head>
+<body>
+
+<div class="main">
+
+  <div class="header">
+    <div class="header_resize">
+      <div class="logo"><h1><a href="index.html">Quant<span>Calc</span> <small>the calculator for all quants</small></a></h1></div>
+      <div class="menu_nav">
+        <ul>
+          <li ><a href="index.html">Home</a></li>
+          <li class="active"><a href="pricing.html">Pricing</a></li>
+          <li><a href="calibration.html">Calibration</a></li>
+          <li><a href="paper.html">Paper</a></li><li><a href="risk.html">Risk Management</a></li>
+          <li><a href="about.html">About us</a></li>
+          <li><a href="contact.html">Contact us</a></li>
+        </ul>
+      </div>
+      <div class="clr"></div>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="content_resize">
+      <div class="mainbar">
+        <div class="article">
+          <h3 style="text-align: center;">Option Pricing under Rough Volatility (RFSV Model)</h3>
+
+          <p>The rough fractional stochastic volatility (RFSV) model treats volatility as a much rougher process than standard diffusion models. Instead of a smooth Brownian-driven volatility, the model uses a fractional Brownian motion with a low Hurst exponent, which helps reproduce the steep short-dated skew and persistent volatility clustering observed in equity options.</p>
+
+          <p>The pricing framework in <a href="paper/rough_vol_with_pseudo_code.pdf">rough_vol_with_pseudo_code.pdf</a> combines three ingredients: a risk-neutral log-price process, a fractional Ornstein-Uhlenbeck log-volatility process, and a leverage correlation between the stock and volatility drivers. This yields a Monte Carlo workflow suitable for pricing vanilla European calls under rough volatility dynamics.</p>
+
+          <div style="text-align: center; margin: 24px 0;">
+              $$dY_t=\left(r-\frac{1}{2}\sigma_t^2\right)dt+\sigma_t dW_t^S$$
+
+              $$dX_t=\nu dW_t^H-\alpha(X_t-m)dt,\qquad X_t=\log \sigma_t$$
+
+              $$d\langle W^S,W\rangle_t=\rho\,dt$$
+          </div>
+
+          <p>Here $H$ controls roughness, $\nu$ is the volatility of volatility, $\alpha$ is the mean-reversion speed, $m$ is the long-run log-volatility level, and $\rho$ controls the leverage effect that drives implied-volatility skew.</p>
+
+          <h3>Pricing algorithm</h3>
+          <ol style="margin: 0 0 18px 22px;">
+            <li>Build the fractional Brownian motion covariance matrix on the simulation time grid.</li>
+            <li>Apply a Cholesky decomposition to generate rough volatility paths efficiently.</li>
+            <li>Simulate correlated volatility and asset-price increments path by path.</li>
+            <li>Recover terminal asset prices, evaluate the European call payoff, and discount the Monte Carlo average.</li>
+          </ol>
+
+          <h3>Pseudo-code structure</h3>
+          <div style="background:#0f172a;color:#e2e8f0;border-radius:10px;padding:18px;overflow:auto;font:13px/1.6 'Courier New', monospace;margin-bottom:20px;">
+<pre style="margin:0;white-space:pre-wrap;">function priceRoughVolOption(params) {
+  buildFractionalBrownianCovarianceMatrix(H, T, N_steps);
+  L_fBM = choleskyDecomposition(Sigma_fBM);
+
+  for each path:
+    Z1, Z2 = generateIndependentGaussianVectors();
+    W_H = matrixVectorMultiply(L_fBM, Z1);
+
+    for each time step:
+      dW_H = roughIncrement(W_H);
+      dW_S = rho * spotDriver(Z1) + sqrt(1 - rho^2) * independentSpotDriver(Z2);
+      X = X + nu * dW_H - alpha * (X - m) * dt;
+      sigma = exp(X);
+      Y = Y + (r - 0.5 * sigma^2) * dt + sigma * dW_S;
+
+    payoff += max(exp(Y) - K, 0);
+
+  return exp(-r * T) * average(payoff);
+}</pre>
+          </div>
+
+          <p>The JavaScript pseudo-code in the PDF uses <strong>Float64Array</strong> buffers to reduce allocation overhead inside the Monte Carlo loop. That structure is especially useful when rough-path generation and dense linear algebra dominate runtime.</p>
+
+          <p>This page is intended as a compact implementation guide. For the full derivation, parameter descriptions, and the complete JavaScript-oriented pseudo-code, see the source document below.</p>
+
+          <div style="text-align: center; margin-top: 30px;">
+              <a href="paper/rough_vol_with_pseudo_code.pdf" download aria-label="Download the rough volatility pricing PDF document" style="padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">Download Full PDF Document (PDF)</a>
+          </div>
+        </div>
+
+      </div>
+      <div class="sidebar">
+        <div class="searchform">
+
+        </div>
+        <div class="gadget">
+          <h2 class="star"><span>Methods</span></h2><div class="clr"></div>
+          <ul class="sb_menu">
+
+            <li><a href="AnalyticSolution.html">Analytic Solutions</a></li>
+            <li><a href="MonteCarlo.html">Monte Carlo Methods</a></li>
+            <li><a href="NPDE.html">Numerical PDE Methods</a></li>
+            <li><a href="Tree.html">Tree Methods</a></li><li><a href="FFT.html">FFT Based Pricing Methods</a></li>
+
+          </ul>
+        </div>
+        <div class="gadget">
+          <h2 class="star"><span>Derivatives Markets</span></h2><div class="clr"></div>
+          <ul class="ex_menu">
+            <li><a href="Stock.html" title="stock Options">Stock Options</a><br />Including Exotic Options</li>
+            <li><a href="InterestRate.html">Interest Rate Derivatives</a><br />Short Rate Model</li>
+            <li><a href="Credit.html" title="Credit Derivatives">Credit Derivatives</a><br />structural Models and Reduced Models</li>
+
+          </ul>
+        </div>
+      </div>
+      <div class="clr"></div>
+    </div>
+  </div>
+
+
+
+</div>
+<div style="text-align:center">Copyright 2012-2026</div>
+</body>
+</html>
