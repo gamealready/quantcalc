@@ -15,7 +15,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 <link href="style.css" rel="stylesheet" type="text/css" />
 </head>
-<body>
+<body onload="Reset();">
 
 <div class="main">
 
@@ -266,18 +266,18 @@ function Reset() {
           <form name="isForm">
           <p><b>Model inputs</b></p>
           <table border="0">
-          <tr><td>Initial asset price S<sub>0</sub></td><td><input name="S0" value="100" /></td><td></td></tr>
-          <tr><td>Initial volatility sigma<sub>0</sub></td><td><input name="sigma0" value="0.25" /></td><td></td></tr>
-          <tr><td>Hurst parameter H</td><td><input name="H" value="0.12" /></td><td>0 &lt; H &lt; 0.5</td></tr>
-          <tr><td>Volatility of volatility nu</td><td><input name="nu" value="0.35" /></td><td></td></tr>
-          <tr><td>Mean reversion speed alpha</td><td><input name="alpha" value="0.02" /></td><td></td></tr>
-          <tr><td>Long-run log-volatility level m</td><td><input name="m" value="-1.386294" /></td><td>m = log(long-run volatility)</td></tr>
-          <tr><td>Leverage correlation rho</td><td><input name="rho" value="-0.70" /></td><td>-1 &lt; rho &lt; 1</td></tr>
-          <tr><td>Risk-free rate r</td><td><input name="r" value="0.03" /></td><td>annualized</td></tr>
-          <tr><td>Strike K</td><td><input name="K" value="100" /></td><td></td></tr>
-          <tr><td>Maturity T</td><td><input name="T" value="1" /></td><td>years</td></tr>
-          <tr><td>Time steps</td><td><input name="N_steps" value="32" /></td><td>2 to 128</td></tr>
-          <tr><td>Monte Carlo paths</td><td><input name="N_paths" value="4000" /></td><td>100 to 50000</td></tr>
+          <tr><td>Initial asset price S<sub>0</sub></td><td><input name="S0" value="" /></td><td></td></tr>
+          <tr><td>Initial volatility sigma<sub>0</sub></td><td><input name="sigma0" value="" /></td><td></td></tr>
+          <tr><td>Hurst parameter H</td><td><input name="H" value="" /></td><td>0 &lt; H &lt; 0.5</td></tr>
+          <tr><td>Volatility of volatility nu</td><td><input name="nu" value="" /></td><td></td></tr>
+          <tr><td>Mean reversion speed alpha</td><td><input name="alpha" value="" /></td><td></td></tr>
+          <tr><td>Long-run log-volatility level m</td><td><input name="m" value="" /></td><td>m = log(long-run volatility)</td></tr>
+          <tr><td>Leverage correlation rho</td><td><input name="rho" value="" /></td><td>-1 &lt; rho &lt; 1</td></tr>
+          <tr><td>Risk-free rate r</td><td><input name="r" value="" /></td><td>annualized</td></tr>
+          <tr><td>Strike K</td><td><input name="K" value="" /></td><td></td></tr>
+          <tr><td>Maturity T</td><td><input name="T" value="" /></td><td>years</td></tr>
+          <tr><td>Time steps</td><td><input name="N_steps" value="" /></td><td>2 to 128</td></tr>
+          <tr><td>Monte Carlo paths</td><td><input name="N_paths" value="" /></td><td>100 to 50000</td></tr>
 
           <tr><td><b>Outputs</b></td><td></td><td></td></tr>
           <tr><td>European call price</td><td><input name="price" value="" onFocus="blur();" /></td><td></td></tr>
@@ -285,7 +285,7 @@ function Reset() {
           <tr><td>95% confidence interval</td><td><input name="ci95" value="" onFocus="blur();" /></td><td></td></tr>
           <tr><td>Runtime</td><td><input name="runtime" value="" onFocus="blur();" /></td><td>ms</td></tr>
           </table>
-          <p id="rough-vol-error" style="color:#cc0000;font-weight:bold;"></p>
+          <p id="rough-vol-error" role="alert" aria-live="assertive" style="color:#cc0000;font-weight:bold;"></p>
           <p>
           <input type="button" name="reset" value="Reset" onClick="Reset();return true;" />
           <input type="button" name="go" value="Calculate" onClick="Calculate();return true;" />
@@ -299,7 +299,9 @@ function Reset() {
             <p>d&lt;W<sup>S</sup>, W&gt;<sub>t</sub> = rho dt</p>
           </div>
 
-          <p>The implementation mirrors the PDF structure: build the fractional Brownian covariance matrix, apply Cholesky decomposition, simulate correlated rough-volatility and asset paths, and discount the average terminal payoff.</p>
+          <p>The implementation mirrors the PDF structure: build the fractional Brownian covariance matrix, apply Cholesky decomposition, simulate rough-volatility paths, and discount the average terminal payoff from the pseudo-code simulation.</p>
+
+          <p><font size="-1">Leverage note: the PDF pseudo-code approximates the leverage effect by correlating the stock increment with the Gaussian innovations used to build the rough path. This page follows that same discrete-time approximation.</font></p>
 
           <p><font size="-1">Notes: the page uses browser-side Monte Carlo simulation and the covariance-matrix construction is cubic in the number of time steps. Smaller values of <b>N_steps</b> and <b>N_paths</b> will return results faster. The long-run level <b>m</b> is the mean of log-volatility, not of volatility itself.</font></p>
 
