@@ -94,7 +94,7 @@ window.quantcalcSearchIndex = [
     ]
   },
   {
-    "url": "BSV.html",
+    "url": "black-scholes-calculator.html",
     "title": "Black-Scholes Option Prices with Greeks",
     "section": "Pricing",
     "summary": "Vanilla Option Price",
