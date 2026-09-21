@@ -1,6 +1,14 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>  <!-- Google tag (gtag.js) -->
+<script>
+  window.MathJax = {
+    tex: {
+      inlineMath: [['$', '$'], ['\\(', '\\)']]
+    }
+  };
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-N0YL0FX070"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
@@ -270,12 +278,12 @@ function Reset() {
           <p><b>Model inputs</b></p>
           <table border="0">
           <tr><td>Initial asset price S<sub>0</sub></td><td><input name="S0" value="" /></td><td></td></tr>
-          <tr><td>Initial volatility sigma<sub>0</sub></td><td><input name="sigma0" value="" /></td><td></td></tr>
+          <tr><td>Initial volatility \( \sigma_0 \)</td><td><input name="sigma0" value="" /></td><td></td></tr>
           <tr><td>Hurst parameter H</td><td><input name="H" value="" /></td><td>0 &lt; H &lt; 0.5</td></tr>
           <tr><td>Volatility of volatility nu</td><td><input name="nu" value="" /></td><td></td></tr>
-          <tr><td>Mean reversion speed alpha</td><td><input name="alpha" value="" /></td><td></td></tr>
-          <tr><td>Long-run log-volatility level m</td><td><input name="m" value="" /></td><td>m = log(long-run volatility)</td></tr>
-          <tr><td>Leverage correlation rho</td><td><input name="rho" value="" /></td><td>-1 &lt; rho &lt; 1</td></tr>
+          <tr><td>Mean reversion speed \( \alpha \)</td><td><input name="alpha" value="" /></td><td></td></tr>
+          <tr><td>Long-run log-volatility level \( m \)</td><td><input name="m" value="" /></td><td>\( m = \log(\text{long-run volatility}) \)</td></tr>
+          <tr><td>Leverage correlation \( \rho \)</td><td><input name="rho" value="" /></td><td>\( -1 &lt; \rho &lt; 1 \)</td></tr>
           <tr><td>Risk-free rate r</td><td><input name="r" value="" /></td><td>annualized</td></tr>
           <tr><td>Strike K</td><td><input name="K" value="" /></td><td></td></tr>
           <tr><td>Maturity T</td><td><input name="T" value="" /></td><td>years</td></tr>
@@ -297,16 +305,16 @@ function Reset() {
 
           <p><b>Model equations</b></p>
           <div style="margin: 18px 0 12px 0;">
-            <p>dY<sub>t</sub> = (r - 0.5 sigma<sub>t</sub><sup>2</sup>) dt + sigma<sub>t</sub> dW<sub>t</sub><sup>S</sup></p>
-            <p>dX<sub>t</sub> = nu dW<sub>t</sub><sup>H</sup> - alpha (X<sub>t</sub> - m) dt, with X<sub>t</sub> = log sigma<sub>t</sub></p>
-            <p>d⟨W<sup>S</sup>, W<sup>H</sup>⟩<sub>t</sub> = rho dt</p>
+            <p>\( dY_t = \left(r - \frac{1}{2}\sigma_t^2\right)dt + \sigma_t\,dW_t^S \)</p>
+            <p>\( dX_t = \nu\,dW_t^H - \alpha(X_t - m)dt,\ \text{with}\ X_t = \log \sigma_t \)</p>
+            <p>\( d\langle W^S, W^H\rangle_t = \rho\,dt \)</p>
           </div>
 
           <p>The implementation mirrors the PDF structure: build the fractional Brownian covariance matrix, apply Cholesky decomposition, simulate rough-volatility paths, and discount the average terminal payoff from the pseudo-code simulation.</p>
 
           <p><span style="font-size:smaller;">Leverage note: the PDF pseudo-code approximates the leverage effect by correlating the stock increment with the Gaussian innovations used to build the rough path. This page follows that same discrete-time approximation.</span></p>
 
-          <p><span style="font-size:smaller;">Notes: the page uses browser-side Monte Carlo simulation and the covariance-matrix construction is cubic in the number of time steps. Smaller values of <b>N_steps</b> and <b>N_paths</b> will return results faster. The long-run level <b>m</b> is the mean of log-volatility, not of volatility itself.</span></p>
+          <p><span style="font-size:smaller;">Notes: the page uses browser-side Monte Carlo simulation and the covariance-matrix construction is cubic in the number of time steps. Smaller values of <b>N_steps</b> and <b>N_paths</b> will return results faster. The long-run level <b>\( m \)</b> is the mean of log-volatility, not of volatility itself.</span></p>
 
           <p>Tagged: <a href="paper/rough_vol_with_pseudo_code.pdf">Rough Volatility</a>, <a href="paper/rough_vol_with_pseudo_code.pdf">RFSV</a>, <a href="paper/rough_vol_with_pseudo_code.pdf">Monte Carlo</a></p>
           <p>  <span>&nbsp;&bull;&nbsp;</span> First Version: Sep 21, 2026  <span>&nbsp;&bull;&nbsp;</span>  </p>
