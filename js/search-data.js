@@ -45,7 +45,7 @@ window.quantcalcSearchIndex = [
     ]
   },
   {
-    "url": "BAW.html",
+    "url": "barone-adesi-whaley-american-option-pricer.html",
     "title": "BAW Analytic American Option Pricer",
     "section": "Pricing",
     "summary": "Analytic American Option Pricer",
