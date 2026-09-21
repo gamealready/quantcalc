@@ -299,7 +299,7 @@ function Reset() {
           <div style="margin: 18px 0 12px 0;">
             <p>dY<sub>t</sub> = (r - 0.5 sigma<sub>t</sub><sup>2</sup>) dt + sigma<sub>t</sub> dW<sub>t</sub><sup>S</sup></p>
             <p>dX<sub>t</sub> = nu dW<sub>t</sub><sup>H</sup> - alpha (X<sub>t</sub> - m) dt, with X<sub>t</sub> = log sigma<sub>t</sub></p>
-            <p>d&lt;W<sup>S</sup>, W&gt;<sub>t</sub> = rho dt</p>
+            <p>d⟨W<sup>S</sup>, W<sup>H</sup>⟩<sub>t</sub> = rho dt</p>
           </div>
 
           <p>The implementation mirrors the PDF structure: build the fractional Brownian covariance matrix, apply Cholesky decomposition, simulate rough-volatility paths, and discount the average terminal payoff from the pseudo-code simulation.</p>
