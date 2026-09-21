@@ -1,14 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>  <!-- Google tag (gtag.js) -->
-<script>
-  window.MathJax = {
-    tex: {
-      inlineMath: [['$', '$'], ['\\(', '\\)']]
-    }
-  };
-</script>
-<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-N0YL0FX070"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
@@ -19,12 +11,11 @@
 </script>
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1337506067911632"
   crossorigin="anonymous"></script>
-<title>Rough Volatility Option Pricing</title>
+<title>Rough Volatility European Call Calculator</title>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 <link href="style.css" rel="stylesheet" type="text/css" />
-
 </head>
-<body>
+<body onload="Reset();">
 
 <div class="main">
 
@@ -49,60 +40,277 @@
     <div class="content_resize">
       <div class="mainbar">
         <div class="article">
-          <h3 style="text-align: center;">Option Pricing under Rough Volatility (RFSV Model)</h3>
+          <h2><span>Rough Volatility European Call</span> Calculator</h2><div class="clr"></div>
+          <p>Posted by <a href="contact.html">Gary Pai</a></p>
 
-          <p>The rough fractional stochastic volatility (RFSV) model treats volatility as a much rougher process than standard diffusion models. Instead of a smooth Brownian-driven volatility, the model uses a fractional Brownian motion with a low Hurst exponent, which helps reproduce the steep short-dated skew and persistent volatility clustering observed in equity options.</p>
+<script type="text/javascript">
+function readNumber(fieldName) {
+  var raw = document.isForm[fieldName].value;
+  var value = parseFloat(raw);
+  if (!isFinite(value)) {
+    throw new Error("Invalid input for " + fieldName + ".");
+  }
+  return value;
+}
 
-          <p>The pricing framework in <a href="paper/rough_vol_with_pseudo_code.pdf">rough_vol_with_pseudo_code.pdf</a> combines three ingredients: a risk-neutral log-price process, a fractional Ornstein-Uhlenbeck log-volatility process, and a leverage correlation between the stock and volatility drivers. This yields a Monte Carlo workflow suitable for pricing vanilla European calls under rough volatility dynamics.</p>
+function readInteger(fieldName) {
+  var numericValue = readNumber(fieldName);
+  var value = Math.round(numericValue);
+  if (Math.abs(value - numericValue) > 1e-9) {
+    throw new Error(fieldName + " must be an integer.");
+  }
+  return value;
+}
 
-          <div style="text-align: center; margin: 24px 0;">
-              $$dY_t=\left(r-\frac{1}{2}\sigma_t^2\right)dt+\sigma_t dW_t^S$$
+function buildFractionalCovarianceMatrix(H, T, steps) {
+  var dt = T / steps;
+  var sigma = new Array(steps);
+  var powers = new Float64Array(steps);
+  for (var i = 0; i < steps; i++) {
+    powers[i] = Math.pow((i + 1) * dt, 2 * H);
+  }
+  for (var i = 0; i < steps; i++) {
+    sigma[i] = new Float64Array(steps);
+    for (var j = 0; j <= i; j++) {
+      var timeDistance = Math.abs(i - j) * dt;
+      var value = 0.5 * (powers[i] + powers[j] - Math.pow(timeDistance, 2 * H));
+      sigma[i][j] = value;
+      sigma[j][i] = value;
+    }
+  }
+  return sigma;
+}
 
-              $$dX_t=\nu dW_t^H-\alpha(X_t-m)dt,\qquad X_t=\log \sigma_t$$
+function choleskyDecomposition(matrix, size) {
+  var L = new Array(size);
+  for (var i = 0; i < size; i++) {
+    L[i] = new Float64Array(size);
+  }
+  for (var row = 0; row < size; row++) {
+    for (var col = 0; col <= row; col++) {
+      var sum = matrix[row][col];
+      for (var k = 0; k < col; k++) {
+        sum -= L[row][k] * L[col][k];
+      }
+      if (row === col) {
+        if (sum <= 0) {
+          throw new Error("Covariance matrix is not positive definite for the chosen parameters.");
+        }
+        L[row][col] = Math.sqrt(sum);
+      } else {
+        L[row][col] = sum / L[col][col];
+      }
+    }
+  }
+  return L;
+}
 
-              $$d\langle W^S,W\rangle_t=\rho\,dt$$
+function generateStandardNormalVector(size) {
+  var values = new Float64Array(size);
+  for (var i = 0; i < size; i += 2) {
+    var u1 = Math.random();
+    var u2 = Math.random();
+    if (u1 < 1e-12) {
+      u1 = 1e-12;
+    }
+    var radius = Math.sqrt(-2 * Math.log(u1));
+    var angle = 2 * Math.PI * u2;
+    values[i] = radius * Math.cos(angle);
+    if (i + 1 < size) {
+      values[i + 1] = radius * Math.sin(angle);
+    }
+  }
+  return values;
+}
+
+function lowerTriangularMatrixVectorMultiply(matrix, vector, size) {
+  var result = new Float64Array(size);
+  for (var row = 0; row < size; row++) {
+    var sum = 0;
+    for (var col = 0; col <= row; col++) {
+      sum += matrix[row][col] * vector[col];
+    }
+    result[row] = sum;
+  }
+  return result;
+}
+
+function formatNumber(value, digits) {
+  if (!isFinite(value)) {
+    return "";
+  }
+  return value.toFixed(digits);
+}
+
+function priceRoughVolOption(params) {
+  var dt = params.T / params.N_steps;
+  var sqrt_dt = Math.sqrt(dt);
+  var sigmaFBM = buildFractionalCovarianceMatrix(params.H, params.T, params.N_steps);
+  var lFBM = choleskyDecomposition(sigmaFBM, params.N_steps);
+  var sumPayoffs = 0.0;
+  var sumPayoffsSquared = 0.0;
+
+  for (var p = 0; p < params.N_paths; p++) {
+    var z1 = generateStandardNormalVector(params.N_steps);
+    var z2 = generateStandardNormalVector(params.N_steps);
+    var wH = lowerTriangularMatrixVectorMultiply(lFBM, z1, params.N_steps);
+    var yCurrent = Math.log(params.S0);
+    var xCurrent = params.X0;
+
+    for (var i = 0; i < params.N_steps; i++) {
+      var dWH = (i === 0) ? wH[i] : (wH[i] - wH[i - 1]);
+      var dWS = params.rho * (z1[i] * sqrt_dt) + params.sqrtOneMinusRhoSquared * (z2[i] * sqrt_dt);
+      xCurrent += params.nu * dWH - params.alpha * (xCurrent - params.m) * dt;
+      var sigma = Math.exp(xCurrent);
+      yCurrent += (params.r - 0.5 * sigma * sigma) * dt + sigma * dWS;
+    }
+
+    var terminalPrice = Math.exp(yCurrent);
+    var payoff = Math.max(terminalPrice - params.K, 0);
+    sumPayoffs += payoff;
+    sumPayoffsSquared += payoff * payoff;
+  }
+
+  var averagePayoff = sumPayoffs / params.N_paths;
+  var variance = Math.max(sumPayoffsSquared / params.N_paths - averagePayoff * averagePayoff, 0);
+  var discountFactor = Math.exp(-params.r * params.T);
+  var optionPrice = discountFactor * averagePayoff;
+  var standardError = discountFactor * Math.sqrt(variance / params.N_paths);
+
+  return {
+    optionPrice: optionPrice,
+    standardError: standardError,
+    lower95: optionPrice - 1.96 * standardError,
+    upper95: optionPrice + 1.96 * standardError
+  };
+}
+
+function Calculate() {
+  var errorBox = document.getElementById("rough-vol-error");
+  errorBox.innerHTML = "";
+  try {
+    var params = {
+      S0: readNumber("S0"),
+      sigma0: readNumber("sigma0"),
+      H: readNumber("H"),
+      nu: readNumber("nu"),
+      alpha: readNumber("alpha"),
+      m: readNumber("m"),
+      rho: readNumber("rho"),
+      r: readNumber("r"),
+      K: readNumber("K"),
+      T: readNumber("T"),
+      N_steps: readInteger("N_steps"),
+      N_paths: readInteger("N_paths")
+    };
+
+    if (params.S0 <= 0 || params.sigma0 <= 0 || params.K <= 0 || params.T <= 0) {
+      throw new Error("S0, sigma0, K, and T must be positive.");
+    }
+    if (params.H <= 0 || params.H >= 0.5) {
+      throw new Error("H must be between 0 and 0.5.");
+    }
+    if (params.nu < 0 || params.alpha < 0) {
+      throw new Error("nu and alpha must be non-negative.");
+    }
+    if (params.rho <= -1 || params.rho >= 1) {
+      throw new Error("rho must be strictly between -1 and 1.");
+    }
+    if (params.N_steps < 2 || params.N_steps > 128) {
+      throw new Error("N_steps must be between 2 and 128.");
+    }
+    if (params.N_paths < 100 || params.N_paths > 50000) {
+      throw new Error("N_paths must be between 100 and 50000.");
+    }
+
+    params.X0 = Math.log(params.sigma0);
+    params.sqrtOneMinusRhoSquared = Math.sqrt(1 - params.rho * params.rho);
+
+    var startTime = new Date().getTime();
+    var result = priceRoughVolOption(params);
+    var elapsedMilliseconds = new Date().getTime() - startTime;
+
+    document.isForm.price.value = formatNumber(result.optionPrice, 6);
+    document.isForm.stderr.value = formatNumber(result.standardError, 6);
+    document.isForm.ci95.value = "[" + formatNumber(result.lower95, 6) + ", " + formatNumber(result.upper95, 6) + "]";
+    document.isForm.runtime.value = elapsedMilliseconds.toString();
+  } catch (err) {
+    document.isForm.price.value = "";
+    document.isForm.stderr.value = "";
+    document.isForm.ci95.value = "";
+    document.isForm.runtime.value = "";
+    errorBox.innerHTML = err.message;
+  }
+}
+
+function Reset() {
+  document.isForm.S0.value = "100";
+  document.isForm.sigma0.value = "0.25";
+  document.isForm.H.value = "0.12";
+  document.isForm.nu.value = "0.35";
+  document.isForm.alpha.value = "0.02";
+  document.isForm.m.value = "-1.386294";
+  document.isForm.rho.value = "-0.70";
+  document.isForm.r.value = "0.03";
+  document.isForm.K.value = "100";
+  document.isForm.T.value = "1";
+  document.isForm.N_steps.value = "32";
+  document.isForm.N_paths.value = "4000";
+  document.isForm.price.value = "";
+  document.isForm.stderr.value = "";
+  document.isForm.ci95.value = "";
+  document.isForm.runtime.value = "";
+  document.getElementById("rough-vol-error").innerHTML = "";
+}
+</script>
+
+          <p>This calculator follows the Monte Carlo pseudo-code in <a href="paper/rough_vol_with_pseudo_code.pdf">rough_vol_with_pseudo_code.pdf</a>. It prices a vanilla European call under the rough fractional stochastic volatility (RFSV) model by generating fractional Brownian motion paths, evolving log-volatility, and simulating the correlated stock path under the risk-neutral measure.</p>
+
+          <form name="isForm">
+          <p><b>Model inputs</b></p>
+          <table border="0">
+          <tr><td>Initial asset price S<sub>0</sub></td><td><input name="S0" value="" /></td><td></td></tr>
+          <tr><td>Initial volatility sigma<sub>0</sub></td><td><input name="sigma0" value="" /></td><td></td></tr>
+          <tr><td>Hurst parameter H</td><td><input name="H" value="" /></td><td>0 &lt; H &lt; 0.5</td></tr>
+          <tr><td>Volatility of volatility nu</td><td><input name="nu" value="" /></td><td></td></tr>
+          <tr><td>Mean reversion speed alpha</td><td><input name="alpha" value="" /></td><td></td></tr>
+          <tr><td>Long-run log-volatility level m</td><td><input name="m" value="" /></td><td>m = log(long-run volatility)</td></tr>
+          <tr><td>Leverage correlation rho</td><td><input name="rho" value="" /></td><td>-1 &lt; rho &lt; 1</td></tr>
+          <tr><td>Risk-free rate r</td><td><input name="r" value="" /></td><td>annualized</td></tr>
+          <tr><td>Strike K</td><td><input name="K" value="" /></td><td></td></tr>
+          <tr><td>Maturity T</td><td><input name="T" value="" /></td><td>years</td></tr>
+          <tr><td>Time steps</td><td><input name="N_steps" value="" /></td><td>2 to 128</td></tr>
+          <tr><td>Monte Carlo paths</td><td><input name="N_paths" value="" /></td><td>100 to 50000</td></tr>
+
+          <tr><td><b>Outputs</b></td><td></td><td></td></tr>
+          <tr><td>European call price</td><td><input name="price" value="" onFocus="blur();" /></td><td></td></tr>
+          <tr><td>Monte Carlo standard error</td><td><input name="stderr" value="" onFocus="blur();" /></td><td></td></tr>
+          <tr><td>95% confidence interval</td><td><input name="ci95" value="" onFocus="blur();" /></td><td></td></tr>
+          <tr><td>Runtime</td><td><input name="runtime" value="" onFocus="blur();" /></td><td>ms</td></tr>
+          </table>
+          <p id="rough-vol-error" role="alert" aria-live="assertive" style="color:#cc0000;font-weight:bold;"></p>
+          <p>
+          <input type="button" name="reset" value="Reset" onClick="Reset();return true;" />
+          <input type="button" name="go" value="Calculate" onClick="Calculate();return true;" />
+          </p>
+          </form>
+
+          <p><b>Model equations</b></p>
+          <div style="margin: 18px 0 12px 0;">
+            <p>dY<sub>t</sub> = (r - 0.5 sigma<sub>t</sub><sup>2</sup>) dt + sigma<sub>t</sub> dW<sub>t</sub><sup>S</sup></p>
+            <p>dX<sub>t</sub> = nu dW<sub>t</sub><sup>H</sup> - alpha (X<sub>t</sub> - m) dt, with X<sub>t</sub> = log sigma<sub>t</sub></p>
+            <p>d&lt;W<sup>S</sup>, W&gt;<sub>t</sub> = rho dt</p>
           </div>
 
-          <p>Here $H$ controls roughness, $\nu$ is the volatility of volatility, $\alpha$ is the mean-reversion speed, $m$ is the long-run log-volatility level, and $\rho$ controls the leverage effect that drives implied-volatility skew.</p>
+          <p>The implementation mirrors the PDF structure: build the fractional Brownian covariance matrix, apply Cholesky decomposition, simulate rough-volatility paths, and discount the average terminal payoff from the pseudo-code simulation.</p>
 
-          <h3>Pricing algorithm</h3>
-          <ol style="margin: 0 0 18px 22px;">
-            <li>Build the fractional Brownian motion covariance matrix on the simulation time grid.</li>
-            <li>Apply a Cholesky decomposition to generate rough volatility paths efficiently.</li>
-            <li>Simulate correlated volatility and asset-price increments path by path.</li>
-            <li>Recover terminal asset prices, evaluate the European call payoff, and discount the Monte Carlo average.</li>
-          </ol>
+          <p><span style="font-size:smaller;">Leverage note: the PDF pseudo-code approximates the leverage effect by correlating the stock increment with the Gaussian innovations used to build the rough path. This page follows that same discrete-time approximation.</span></p>
 
-          <h3>Pseudo-code structure</h3>
-          <div style="background:#0f172a;color:#e2e8f0;border-radius:10px;padding:18px;overflow:auto;font:13px/1.6 'Courier New', monospace;margin-bottom:20px;">
-<pre style="margin:0;white-space:pre-wrap;">function priceRoughVolOption(params) {
-  buildFractionalBrownianCovarianceMatrix(H, T, N_steps);
-  L_fBM = choleskyDecomposition(Sigma_fBM);
+          <p><span style="font-size:smaller;">Notes: the page uses browser-side Monte Carlo simulation and the covariance-matrix construction is cubic in the number of time steps. Smaller values of <b>N_steps</b> and <b>N_paths</b> will return results faster. The long-run level <b>m</b> is the mean of log-volatility, not of volatility itself.</span></p>
 
-  for each path:
-    Z1, Z2 = generateIndependentGaussianVectors();
-    W_H = matrixVectorMultiply(L_fBM, Z1);
-
-    for each time step:
-      dW_H = roughIncrement(W_H);
-      dW_S = rho * spotDriver(Z1) + sqrt(1 - rho^2) * independentSpotDriver(Z2);
-      X = X + nu * dW_H - alpha * (X - m) * dt;
-      sigma = exp(X);
-      Y = Y + (r - 0.5 * sigma^2) * dt + sigma * dW_S;
-
-    payoff += max(exp(Y) - K, 0);
-
-  return exp(-r * T) * average(payoff);
-}</pre>
-          </div>
-
-          <p>The JavaScript pseudo-code in the PDF uses <strong>Float64Array</strong> buffers to reduce allocation overhead inside the Monte Carlo loop. That structure is especially useful when rough-path generation and dense linear algebra dominate runtime.</p>
-
-          <p>This page is intended as a compact implementation guide. For the full derivation, parameter descriptions, and the complete JavaScript-oriented pseudo-code, see the source document below.</p>
-
-          <div style="text-align: center; margin-top: 30px;">
-              <a href="paper/rough_vol_with_pseudo_code.pdf" download aria-label="Download the rough volatility pricing PDF document" style="padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">Download Full PDF Document (PDF)</a>
-          </div>
+          <p>Tagged: <a href="paper/rough_vol_with_pseudo_code.pdf">Rough Volatility</a>, <a href="paper/rough_vol_with_pseudo_code.pdf">RFSV</a>, <a href="paper/rough_vol_with_pseudo_code.pdf">Monte Carlo</a></p>
+          <p>  <span>&nbsp;&bull;&nbsp;</span> First Version: Sep 21, 2026  <span>&nbsp;&bull;&nbsp;</span>  </p>
+          <p>  <span>&nbsp;&bull;&nbsp;</span> Last Edited: Sep 21, 2026  <span>&nbsp;&bull;&nbsp;</span>  </p>
         </div>
 
       </div>
@@ -134,8 +342,6 @@
       <div class="clr"></div>
     </div>
   </div>
-
-
 
 </div>
 <div style="text-align:center">Copyright 2012-2026</div>
