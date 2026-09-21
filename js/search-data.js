@@ -504,9 +504,9 @@ window.quantcalcSearchIndex = [
   },
   {
     "url": "rough-volatility-option-pricing.html",
-    "title": "Option Pricing under Rough Volatility (RFSV Model)",
+    "title": "Rough Volatility European Call Calculator",
     "section": "Pricing",
-    "summary": "Monte Carlo pricing page for the rough fractional stochastic volatility model",
+    "summary": "Monte Carlo calculator for a European call under the rough fractional stochastic volatility model",
     "keywords": [
       "rough volatility",
       "RFSV",
