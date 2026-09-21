@@ -503,6 +503,19 @@ window.quantcalcSearchIndex = [
     "summary": "Interest Rate Derivatives"
   },
   {
+    "url": "rough-volatility-option-pricing.html",
+    "title": "Option Pricing under Rough Volatility (RFSV Model)",
+    "section": "Pricing",
+    "summary": "Monte Carlo pricing page for the rough fractional stochastic volatility model",
+    "keywords": [
+      "rough volatility",
+      "RFSV",
+      "fractional Brownian motion",
+      "Monte Carlo",
+      "European call option"
+    ]
+  },
+  {
     "url": "risk.html",
     "title": "QuantCalc — risk",
     "section": "Risk Management",
