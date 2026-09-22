@@ -452,13 +452,12 @@ function initializeRoughVolPage() {
             <p>\( dY_t = \left(r - \frac{1}{2}\sigma_t^2\right)dt + \sigma_t\,dW_t^S \)</p>
             <p>\( dX_t = \nu\,dW_t^H - \alpha(X_t - m)dt,\ \text{with}\ X_t = \log \sigma_t \)</p>
             <p>\( d\langle W^S, W^H\rangle_t = \rho\,dt \)</p>
+            <p>The implementation mirrors the PDF structure: build the fractional Brownian covariance matrix, apply Cholesky decomposition, simulate rough-volatility paths, and discount the average terminal payoff from the pseudo-code simulation.</p>
+
+            <p><span style="font-size:smaller;">Leverage note: the PDF pseudo-code approximates the leverage effect by correlating the stock increment with the Gaussian innovations used to build the rough path. This page follows that same discrete-time approximation.</span></p>
+
+            <p><span style="font-size:smaller;">Notes: the page uses browser-side Monte Carlo simulation and the covariance-matrix construction is cubic in the number of time steps. Smaller values of <b>N_steps</b> and <b>N_paths</b> will return results faster. The long-run level <b>\( m \)</b> is the mean of log-volatility, not of volatility itself.</span></p>
           </div>
-
-          <p>The implementation mirrors the PDF structure: build the fractional Brownian covariance matrix, apply Cholesky decomposition, simulate rough-volatility paths, and discount the average terminal payoff from the pseudo-code simulation.</p>
-
-          <p><span style="font-size:smaller;">Leverage note: the PDF pseudo-code approximates the leverage effect by correlating the stock increment with the Gaussian innovations used to build the rough path. This page follows that same discrete-time approximation.</span></p>
-
-          <p><span style="font-size:smaller;">Notes: the page uses browser-side Monte Carlo simulation and the covariance-matrix construction is cubic in the number of time steps. Smaller values of <b>N_steps</b> and <b>N_paths</b> will return results faster. The long-run level <b>\( m \)</b> is the mean of log-volatility, not of volatility itself.</span></p>
 
           <div class="faq-section">
             <h2>Rough Volatility FAQ</h2>
