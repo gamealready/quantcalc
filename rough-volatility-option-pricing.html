@@ -375,7 +375,7 @@ function setCollapsibleState(contentNode, toggleButton, openState, openLabelText
   }
   toggleButton.setAttribute("aria-expanded", openState ? "true" : "false");
   if (openLabelText && closedLabelText) {
-    toggleButton.innerHTML = openState ? openLabelText : closedLabelText;
+    toggleButton.textContent = openState ? openLabelText : closedLabelText;
   }
 }
 
