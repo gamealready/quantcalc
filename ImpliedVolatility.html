@@ -64,8 +64,11 @@ function brentRoot(f, lower, upper, tolerance, maxIterations) {
   var fa = f(a);
   var fb = f(b);
 
-  if (!isFinite(fa) || !isFinite(fb) || fa * fb > 0) {
-    return { sigma: NaN, iterations: 0, converged: false };
+  if (!isFinite(fa) || !isFinite(fb)) {
+    return { sigma: NaN, iterations: 0, converged: false, error: "INVALID_ENDPOINT_EVALUATION" };
+  }
+  if (fa * fb > 0) {
+    return { sigma: NaN, iterations: 0, converged: false, error: "UNBRACKETED_ROOT" };
   }
 
   if (Math.abs(fa) < Math.abs(fb)) {
@@ -102,6 +105,9 @@ function brentRoot(f, lower, upper, tolerance, maxIterations) {
     }
 
     var fs = f(s);
+    if (fs === 0) {
+      return { sigma: s, iterations: iter, converged: true };
+    }
     d = c;
     c = b;
     fc = fb;
@@ -124,7 +130,7 @@ function brentRoot(f, lower, upper, tolerance, maxIterations) {
     }
   }
 
-  return { sigma: NaN, iterations: maxIterations, converged: false };
+  return { sigma: NaN, iterations: maxIterations, converged: false, error: "MAX_ITERATIONS_EXCEEDED" };
 }
 
 function parseInput(name) {
@@ -178,6 +184,12 @@ function impliedVolatility(marketPrice, S, K, r, q, T, optionType) {
 
   var root = brentRoot(objective, lowerVol, upperVol, tolerance, 100);
   if (!root.converged || !isFinite(root.sigma)) {
+    if (root.error === "INVALID_ENDPOINT_EVALUATION") {
+      return { sigma: NaN, error: "Invalid endpoint evaluation during root search." };
+    }
+    if (root.error === "UNBRACKETED_ROOT") {
+      return { sigma: NaN, error: "Unable to bracket the root in [0.0001, 5.0]." };
+    }
     return { sigma: NaN, error: "Brent method did not converge within 100 iterations." };
   }
 
