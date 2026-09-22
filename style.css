@@ -39,14 +39,16 @@ body {
     align-items: center;
 }
 
-.logo h1 a {
+.logo h1 a,
+.logo .site_title a {
     color: #fff;
     text-decoration: none;
     font-weight: 800;
     font-size: 28px;
 }
 
-.logo h1 span {
+.logo h1 span,
+.logo .site_title span {
     color: #39a0ed;
 }
 
