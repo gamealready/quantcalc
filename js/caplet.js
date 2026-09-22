@@ -144,10 +144,12 @@
   }
 
   function injectSoftwareApplicationSchema() {
+    var canonicalNode;
+    var metaDescriptionNode;
     var titleNode;
-    var descriptionNode;
     var title;
     var description;
+    var canonicalUrl;
     var schema;
     var script;
 
@@ -159,10 +161,16 @@
       return;
     }
 
+    canonicalNode = document.querySelector("link[rel='canonical']");
+    metaDescriptionNode = document.querySelector("meta[name='description']");
     titleNode = document.getElementsByTagName("h1")[0];
-    descriptionNode = document.getElementsByTagName("p")[0];
     title = titleNode ? titleNode.textContent.replace(/\s+/g, " ").trim() : document.title;
-    description = descriptionNode ? descriptionNode.textContent.replace(/\s+/g, " ").trim() : "";
+    description = metaDescriptionNode && metaDescriptionNode.content
+      ? metaDescriptionNode.content.replace(/\s+/g, " ").trim()
+      : ((title || "QuantCalc calculator") + " with interactive mathematical computations.");
+    canonicalUrl = canonicalNode && canonicalNode.href
+      ? canonicalNode.href
+      : (window.location.origin + window.location.pathname);
 
     schema = {
       "@context": "https://schema.org",
@@ -170,7 +178,7 @@
       "name": title || "QuantCalc Calculator",
       "applicationCategory": "FinanceApplication",
       "operatingSystem": "Any",
-      "url": window.location.origin + window.location.pathname,
+      "url": canonicalUrl,
       "description": description,
       "offers": {
         "@type": "Offer",
