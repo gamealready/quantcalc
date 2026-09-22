@@ -143,6 +143,30 @@
     return false;
   }
 
+  function findCanonicalLink() {
+    var links = document.getElementsByTagName("link");
+    var i;
+    for (i = 0; i < links.length; i += 1) {
+      var rel = links[i].getAttribute("rel");
+      if (rel && rel.toLowerCase() === "canonical") {
+        return links[i];
+      }
+    }
+    return null;
+  }
+
+  function findMetaDescriptionTag() {
+    var metas = document.getElementsByTagName("meta");
+    var i;
+    for (i = 0; i < metas.length; i += 1) {
+      var nameAttr = metas[i].getAttribute("name");
+      if (nameAttr && nameAttr.toLowerCase() === "description") {
+        return metas[i];
+      }
+    }
+    return null;
+  }
+
   function injectSoftwareApplicationSchema() {
     var canonicalNode;
     var metaDescriptionNode;
@@ -161,8 +185,8 @@
       return;
     }
 
-    canonicalNode = document.querySelector("link[rel='canonical']");
-    metaDescriptionNode = document.querySelector("meta[name='description']");
+    canonicalNode = findCanonicalLink();
+    metaDescriptionNode = findMetaDescriptionTag();
     titleNode = document.getElementsByTagName("h1")[0];
     title = titleNode ? titleNode.textContent.replace(/\s+/g, " ").trim() : document.title;
     description = metaDescriptionNode && metaDescriptionNode.content
