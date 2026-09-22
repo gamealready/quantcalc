@@ -40,13 +40,23 @@
     return window.location.protocol + "//" + window.location.host + window.location.pathname;
   }
 
+  function findHeadElement() {
+    return document.head || document.getElementsByTagName("head")[0] || null;
+  }
+
   function injectSoftwareApplicationSchema() {
     var title = normalizeWhitespace(document.title) || findHeadingText() || "QuantCalc Calculator";
     var canonicalNode;
+    var head;
     var script;
     var schema;
 
     if (document.getElementById("quantcalc-softwareapplication-schema")) {
+      return;
+    }
+
+    head = findHeadElement();
+    if (!head) {
       return;
     }
 
@@ -70,7 +80,7 @@
     script.id = "quantcalc-softwareapplication-schema";
     script.type = "application/ld+json";
     script.text = JSON.stringify(schema);
-    document.getElementsByTagName("head")[0].appendChild(script);
+    head.appendChild(script);
   }
 
   if (document.readyState === "loading") {
