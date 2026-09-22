@@ -403,6 +403,11 @@ function toggleFaq(answerId, toggleButton) {
   }
   var isOpen = answerNode.className.indexOf("open") !== -1;
   answerNode.className = isOpen ? "faq-answer" : "faq-answer open";
+  if (isOpen) {
+    answerNode.setAttribute("hidden", "hidden");
+  } else {
+    answerNode.removeAttribute("hidden");
+  }
   toggleButton.setAttribute("aria-expanded", isOpen ? "false" : "true");
 }
 </script>
@@ -469,36 +474,36 @@ function toggleFaq(answerId, toggleButton) {
 
   <div class="faq-item">
     <h2>
-      <button type="button" class="faq-toggle" aria-expanded="false" aria-controls="faq-answer-1" onclick="toggleFaq('faq-answer-1', this);">What is implied volatility in this calculator?</button>
+      <button id="faq-toggle-1" type="button" class="faq-toggle" aria-expanded="false" aria-controls="faq-answer-1" onclick="toggleFaq('faq-answer-1', this);">What is implied volatility in this calculator?</button>
     </h2>
-    <div id="faq-answer-1" class="faq-answer">
+    <div id="faq-answer-1" class="faq-answer" role="region" aria-labelledby="faq-toggle-1" hidden="hidden">
       Implied volatility is the annualized volatility value that makes the Black-Scholes model price match your observed market option price for the selected call or put.
     </div>
   </div>
 
   <div class="faq-item">
     <h2>
-      <button type="button" class="faq-toggle" aria-expanded="false" aria-controls="faq-answer-2" onclick="toggleFaq('faq-answer-2', this);">Why does the calculator show no-arbitrage bounds?</button>
+      <button id="faq-toggle-2" type="button" class="faq-toggle" aria-expanded="false" aria-controls="faq-answer-2" onclick="toggleFaq('faq-answer-2', this);">Why does the calculator show no-arbitrage bounds?</button>
     </h2>
-    <div id="faq-answer-2" class="faq-answer">
+    <div id="faq-answer-2" class="faq-answer" role="region" aria-labelledby="faq-toggle-2" hidden="hidden">
       The no-arbitrage bounds check validates that the market option price is theoretically feasible before solving for implied volatility, which prevents invalid or misleading outputs.
     </div>
   </div>
 
   <div class="faq-item">
     <h2>
-      <button type="button" class="faq-toggle" aria-expanded="false" aria-controls="faq-answer-3" onclick="toggleFaq('faq-answer-3', this);">Why are Brent and Newton-Raphson results both displayed?</button>
+      <button id="faq-toggle-3" type="button" class="faq-toggle" aria-expanded="false" aria-controls="faq-answer-3" onclick="toggleFaq('faq-answer-3', this);">Why are Brent and Newton-Raphson results both displayed?</button>
     </h2>
-    <div id="faq-answer-3" class="faq-answer">
+    <div id="faq-answer-3" class="faq-answer" role="region" aria-labelledby="faq-toggle-3" hidden="hidden">
       Brent is robust and used as the primary root finder, while Newton-Raphson is shown for comparison and speed diagnostics when vega remains well behaved.
     </div>
   </div>
 
   <div class="faq-item">
     <h2>
-      <button type="button" class="faq-toggle" aria-expanded="false" aria-controls="faq-answer-4" onclick="toggleFaq('faq-answer-4', this);">What does it mean if Newton-Raphson did not converge?</button>
+      <button id="faq-toggle-4" type="button" class="faq-toggle" aria-expanded="false" aria-controls="faq-answer-4" onclick="toggleFaq('faq-answer-4', this);">What does it mean if Newton-Raphson did not converge?</button>
     </h2>
-    <div id="faq-answer-4" class="faq-answer">
+    <div id="faq-answer-4" class="faq-answer" role="region" aria-labelledby="faq-toggle-4" hidden="hidden">
       It means the Newton updates did not meet the convergence tolerance in the allowed iterations, often because the local slope is too small or the initial guess is less suitable; Brent still provides a stable implied volatility when converged.
     </div>
   </div>
