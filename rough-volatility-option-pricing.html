@@ -52,12 +52,11 @@
 }
 
 .model-equations-toggle {
-  border: 0;
-  background: transparent;
-  padding: 0;
-  margin: 0;
-  font: inherit;
-  color: inherit;
+  border: 1px solid #d9d9d9;
+  background: #f7f7f7;
+  padding: 4px 10px;
+  font-size: 13px;
+  font-weight: bold;
   cursor: pointer;
 }
 
@@ -446,10 +445,9 @@ function initializeRoughVolPage() {
           </p>
           </form>
 
-          <h2>
-            <button id="model-equations-toggle" type="button" class="model-equations-toggle" aria-expanded="true" aria-controls="model-equations-content">Model equations</button>
-          </h2>
-          <div id="model-equations-content" class="model-equations-content open" role="region" aria-labelledby="model-equations-toggle" style="margin: 18px 0 12px 0;">
+          <h2 id="model-equations-heading" style="display:inline-block;margin-right:8px;">Model equations</h2>
+          <button id="model-equations-toggle" type="button" class="model-equations-toggle" aria-expanded="true" aria-controls="model-equations-content">Show/Hide</button>
+          <div id="model-equations-content" class="model-equations-content open" role="region" aria-labelledby="model-equations-heading" style="margin: 18px 0 12px 0;">
             <p>\( dY_t = \left(r - \frac{1}{2}\sigma_t^2\right)dt + \sigma_t\,dW_t^S \)</p>
             <p>\( dX_t = \nu\,dW_t^H - \alpha(X_t - m)dt,\ \text{with}\ X_t = \log \sigma_t \)</p>
             <p>\( d\langle W^S, W^H\rangle_t = \rho\,dt \)</p>
