@@ -155,10 +155,22 @@ function impliedVolatility(marketPrice, S, K, r, q, T, optionType) {
   var fUpper = objective(upperVol);
 
   if (Math.abs(fLower) < tolerance) {
-    return { sigma: lowerVol, iterations: 0, converged: true, bounds: bounds };
+    return {
+      sigma: lowerVol,
+      iterations: 0,
+      converged: true,
+      bounds: bounds,
+      modelPrice: blackScholesPrice(S, K, r, q, T, lowerVol, optionType)
+    };
   }
   if (Math.abs(fUpper) < tolerance) {
-    return { sigma: upperVol, iterations: 0, converged: true, bounds: bounds };
+    return {
+      sigma: upperVol,
+      iterations: 0,
+      converged: true,
+      bounds: bounds,
+      modelPrice: blackScholesPrice(S, K, r, q, T, upperVol, optionType)
+    };
   }
   if (fLower * fUpper > 0) {
     return { sigma: NaN, error: "Unable to bracket the root in [0.0001, 5.0]." };
