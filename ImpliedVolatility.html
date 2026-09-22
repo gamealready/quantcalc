@@ -216,13 +216,13 @@ function Calculate() {
   if (result.error) {
     document.isForm.sigma.value = "";
     document.isForm.modelPrice.value = "";
-    document.getElementById("ivMessage").innerHTML = result.error;
+    document.getElementById("ivMessage").textContent = result.error;
     return;
   }
 
   document.isForm.sigma.value = formatNumber(result.sigma, 8);
   document.isForm.modelPrice.value = formatNumber(result.modelPrice, 8);
-  document.getElementById("ivMessage").innerHTML = "Converged in " + result.iterations + " iterations. Bounds: [" + formatNumber(result.bounds.lower, 8) + ", " + formatNumber(result.bounds.upper, 8) + "].";
+  document.getElementById("ivMessage").textContent = "Converged in " + result.iterations + " iterations. Bounds: [" + formatNumber(result.bounds.lower, 8) + ", " + formatNumber(result.bounds.upper, 8) + "].";
 }
 
 function Reset() {
@@ -235,7 +235,7 @@ function Reset() {
   document.isForm.marketPrice.value = "8.5";
   document.isForm.sigma.value = "";
   document.isForm.modelPrice.value = "";
-  document.getElementById("ivMessage").innerHTML = "";
+  document.getElementById("ivMessage").textContent = "";
 }
 </script>
 
