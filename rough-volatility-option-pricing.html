@@ -363,8 +363,8 @@ function toggleFaq(answerId, toggleButton) {
   if (!answerNode) {
     return;
   }
-  var isOpen = answerNode.className.indexOf("open") !== -1;
-  answerNode.className = isOpen ? "faq-answer" : "faq-answer open";
+  var isOpen = answerNode.classList.contains("open");
+  answerNode.classList.toggle("open", !isOpen);
   if (isOpen) {
     answerNode.setAttribute("hidden", "hidden");
   } else {
@@ -389,8 +389,8 @@ function toggleModelEquations() {
   if (!contentNode || !toggleButton) {
     return false;
   }
-  var isOpen = contentNode.className.indexOf("open") !== -1;
-  contentNode.className = isOpen ? "model-equations-content" : "model-equations-content open";
+  var isOpen = contentNode.classList.contains("open");
+  contentNode.classList.toggle("open", !isOpen);
   if (isOpen) {
     contentNode.setAttribute("hidden", "hidden");
   } else {
@@ -446,10 +446,10 @@ function initializeRoughVolPage() {
           </p>
           </form>
 
-          <h2 id="model-equations-heading">
+          <h2>
             <button id="model-equations-toggle" type="button" class="model-equations-toggle" aria-expanded="true" aria-controls="model-equations-content">Model equations</button>
           </h2>
-          <div id="model-equations-content" class="model-equations-content open" role="region" aria-labelledby="model-equations-heading" style="margin: 18px 0 12px 0;">
+          <div id="model-equations-content" class="model-equations-content open" role="region" aria-labelledby="model-equations-toggle" style="margin: 18px 0 12px 0;">
             <p>\( dY_t = \left(r - \frac{1}{2}\sigma_t^2\right)dt + \sigma_t\,dW_t^S \)</p>
             <p>\( dX_t = \nu\,dW_t^H - \alpha(X_t - m)dt,\ \text{with}\ X_t = \log \sigma_t \)</p>
             <p>\( d\langle W^S, W^H\rangle_t = \rho\,dt \)</p>
