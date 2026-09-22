@@ -188,7 +188,10 @@
     canonicalNode = findCanonicalLink();
     metaDescriptionNode = findMetaDescriptionTag();
     titleNode = document.getElementsByTagName("h1")[0];
-    title = titleNode ? titleNode.textContent.replace(/\s+/g, " ").trim() : document.title;
+    title = document.title ? document.title.replace(/\s+/g, " ").trim() : "";
+    if (!title && titleNode) {
+      title = titleNode.textContent.replace(/\s+/g, " ").trim();
+    }
     description = metaDescriptionNode && metaDescriptionNode.content
       ? metaDescriptionNode.content.replace(/\s+/g, " ").trim()
       : ((title || "QuantCalc calculator") + " with interactive mathematical computations.");
