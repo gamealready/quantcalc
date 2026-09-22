@@ -50,6 +50,23 @@
 .faq-answer.open {
   display: block;
 }
+
+.model-equations-toggle {
+  border: 1px solid #d9d9d9;
+  background: #f7f7f7;
+  padding: 4px 10px;
+  font-size: 13px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.model-equations-content {
+  display: none;
+}
+
+.model-equations-content.open {
+  display: block;
+}
 </style>
 <script type="application/ld+json">
 {
@@ -345,14 +362,21 @@ function toggleFaq(answerId, toggleButton) {
   if (!answerNode) {
     return;
   }
-  var isOpen = answerNode.className.indexOf("open") !== -1;
-  answerNode.className = isOpen ? "faq-answer" : "faq-answer open";
-  if (isOpen) {
-    answerNode.setAttribute("hidden", "hidden");
+  var isOpen = answerNode.classList.contains("open");
+  setCollapsibleState(answerNode, toggleButton, !isOpen);
+}
+
+function setCollapsibleState(contentNode, toggleButton, openState, openLabelText, closedLabelText) {
+  contentNode.classList.toggle("open", openState);
+  if (openState) {
+    contentNode.removeAttribute("hidden");
   } else {
-    answerNode.removeAttribute("hidden");
+    contentNode.setAttribute("hidden", "hidden");
   }
-  toggleButton.setAttribute("aria-expanded", isOpen ? "false" : "true");
+  toggleButton.setAttribute("aria-expanded", openState ? "true" : "false");
+  if (openLabelText && closedLabelText) {
+    toggleButton.textContent = openState ? openLabelText : closedLabelText;
+  }
 }
 
 function bindFaqToggleHandlers() {
@@ -365,9 +389,29 @@ function bindFaqToggleHandlers() {
   }
 }
 
+function toggleModelEquations() {
+  var contentNode = document.getElementById("model-equations-content");
+  var toggleButton = document.getElementById("model-equations-toggle");
+  if (!contentNode || !toggleButton) {
+    return false;
+  }
+  var isOpen = contentNode.classList.contains("open");
+  setCollapsibleState(contentNode, toggleButton, !isOpen, "Hide model equations", "Show model equations");
+  return false;
+}
+
+function bindModelEquationsToggleHandler() {
+  var toggleButton = document.getElementById("model-equations-toggle");
+  if (!toggleButton) {
+    return;
+  }
+  toggleButton.onclick = toggleModelEquations;
+}
+
 function initializeRoughVolPage() {
   Reset();
   bindFaqToggleHandlers();
+  bindModelEquationsToggleHandler();
 }
 </script>
 
@@ -402,8 +446,9 @@ function initializeRoughVolPage() {
           </p>
           </form>
 
-          <p><b>Model equations</b></p>
-          <div style="margin: 18px 0 12px 0;">
+          <h2 id="model-equations-heading" style="display:inline-block;margin-right:8px;">Model equations</h2>
+          <button id="model-equations-toggle" type="button" class="model-equations-toggle" aria-expanded="true" aria-controls="model-equations-content" aria-describedby="model-equations-heading">Hide model equations</button>
+          <div id="model-equations-content" class="model-equations-content open" role="region" aria-labelledby="model-equations-heading" style="margin: 18px 0 12px 0;">
             <p>\( dY_t = \left(r - \frac{1}{2}\sigma_t^2\right)dt + \sigma_t\,dW_t^S \)</p>
             <p>\( dX_t = \nu\,dW_t^H - \alpha(X_t - m)dt,\ \text{with}\ X_t = \log \sigma_t \)</p>
             <p>\( d\langle W^S, W^H\rangle_t = \rho\,dt \)</p>
