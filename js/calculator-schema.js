@@ -17,10 +17,6 @@
     return false;
   }
 
-  function looksLikeCalculatorPage() {
-    return !!(document.forms && document.forms.isForm);
-  }
-
   function findCanonicalLink() {
     return document.querySelector('link[rel="canonical"]');
   }
@@ -60,7 +56,7 @@
     var script;
     var schema;
 
-    if (document.getElementById("quantcalc-softwareapplication-schema") || hasSoftwareApplicationSchema() || !looksLikeCalculatorPage()) {
+    if (document.getElementById("quantcalc-softwareapplication-schema") || hasSoftwareApplicationSchema()) {
       return;
     }
 
