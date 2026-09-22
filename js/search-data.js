@@ -343,11 +343,14 @@ window.quantcalcSearchIndex = [
   },
   {
     "url": "ImpliedVolatility.html",
-    "title": "Implied Volatility",
+    "title": "Implied Volatility Calculator",
     "section": "Pricing",
+    "summary": "Black-Scholes implied volatility calculator with Brent and Newton-Raphson methods",
     "keywords": [
       "Black-Scholes model",
-      "Implied Volatility"
+      "Implied Volatility",
+      "Brent Method",
+      "Newton-Raphson"
     ]
   },
   {
