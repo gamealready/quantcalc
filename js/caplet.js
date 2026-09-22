@@ -119,9 +119,81 @@
     }
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", injectSearchForm);
-  } else {
+  function looksLikeCalculatorPage() {
+    var form = document.forms && document.forms.isForm;
+    var buttons;
+    var i;
+
+    if (!form) {
+      return false;
+    }
+
+    if (typeof window.Calculate === "function") {
+      return true;
+    }
+
+    buttons = form.querySelectorAll("input[type='button'], button");
+    for (i = 0; i < buttons.length; i += 1) {
+      var label = (buttons[i].value || buttons[i].textContent || "").toLowerCase();
+      if (/(calculate|compute|price|simulate|run)/.test(label)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  function injectSoftwareApplicationSchema() {
+    var titleNode;
+    var descriptionNode;
+    var title;
+    var description;
+    var schema;
+    var script;
+
+    if (document.getElementById("quantcalc-softwareapplication-schema")) {
+      return;
+    }
+
+    if (!looksLikeCalculatorPage()) {
+      return;
+    }
+
+    titleNode = document.getElementsByTagName("h1")[0];
+    descriptionNode = document.getElementsByTagName("p")[0];
+    title = titleNode ? titleNode.textContent.replace(/\s+/g, " ").trim() : document.title;
+    description = descriptionNode ? descriptionNode.textContent.replace(/\s+/g, " ").trim() : "";
+
+    schema = {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": title || "QuantCalc Calculator",
+      "applicationCategory": "FinanceApplication",
+      "operatingSystem": "Any",
+      "url": window.location.href.split("#")[0],
+      "description": description,
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    };
+
+    script = document.createElement("script");
+    script.id = "quantcalc-softwareapplication-schema";
+    script.type = "application/ld+json";
+    script.text = JSON.stringify(schema);
+    document.getElementsByTagName("head")[0].appendChild(script);
+  }
+
+  function initializeSharedEnhancements() {
     injectSearchForm();
+    injectSoftwareApplicationSchema();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initializeSharedEnhancements);
+  } else {
+    initializeSharedEnhancements();
   }
 }());
