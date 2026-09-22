@@ -1,6 +1,5 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
-<html>
 <head>  <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-N0YL0FX070"></script>
 <script>
@@ -12,9 +11,209 @@
 </script>
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1337506067911632"
   crossorigin="anonymous"></script>
-<title>Implied Volatility</title>
+<title>Implied Volatility Calculator</title>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 <link href="style.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="js/caplet.js"></script>
+
+<script type="text/javascript">
+function normalCDF(x) {
+  var a1 = 0.31938153;
+  var a2 = -0.356563782;
+  var a3 = 1.781477937;
+  var a4 = -1.821255978;
+  var a5 = 1.330274429;
+  var L = Math.abs(x);
+  var K = 1.0 / (1.0 + 0.2316419 * L);
+  var w = 1.0 - 1.0 / Math.sqrt(2.0 * Math.PI) * Math.exp(-L * L / 2.0) * (K * (a1 + K * (a2 + K * (a3 + K * (a4 + a5 * K)))));
+  return x < 0 ? 1.0 - w : w;
+}
+
+function blackScholesPrice(S, K, r, q, T, sigma, optionType) {
+  var sqrtT = Math.sqrt(T);
+  var d1 = (Math.log(S / K) + (r - q + 0.5 * sigma * sigma) * T) / (sigma * sqrtT);
+  var d2 = d1 - sigma * sqrtT;
+
+  if (optionType === "call") {
+    return S * Math.exp(-q * T) * normalCDF(d1) - K * Math.exp(-r * T) * normalCDF(d2);
+  }
+
+  return K * Math.exp(-r * T) * normalCDF(-d2) - S * Math.exp(-q * T) * normalCDF(-d1);
+}
+
+function priceBounds(S, K, r, q, T, optionType) {
+  var discountedSpot = S * Math.exp(-q * T);
+  var discountedStrike = K * Math.exp(-r * T);
+
+  if (optionType === "call") {
+    return {
+      lower: Math.max(0, discountedSpot - discountedStrike),
+      upper: discountedSpot
+    };
+  }
+
+  return {
+    lower: Math.max(0, discountedStrike - discountedSpot),
+    upper: discountedStrike
+  };
+}
+
+function brentRoot(f, lower, upper, tolerance, maxIterations) {
+  var a = lower;
+  var b = upper;
+  var fa = f(a);
+  var fb = f(b);
+
+  if (!isFinite(fa) || !isFinite(fb) || fa * fb > 0) {
+    return { sigma: NaN, iterations: 0, converged: false };
+  }
+
+  if (Math.abs(fa) < Math.abs(fb)) {
+    var swapA = a; a = b; b = swapA;
+    var swapFa = fa; fa = fb; fb = swapFa;
+  }
+
+  var c = a;
+  var fc = fa;
+  var d = c;
+  var mflag = true;
+  var s = b;
+
+  for (var iter = 1; iter <= maxIterations; iter++) {
+    if (fa !== fc && fb !== fc) {
+      s = a * fb * fc / ((fa - fb) * (fa - fc))
+        + b * fa * fc / ((fb - fa) * (fb - fc))
+        + c * fa * fb / ((fc - fa) * (fc - fb));
+    } else {
+      s = b - fb * (b - a) / (fb - fa);
+    }
+
+    var condition1 = (s < (3 * a + b) / 4 || s > b);
+    var condition2 = mflag && Math.abs(s - b) >= Math.abs(b - c) / 2;
+    var condition3 = !mflag && Math.abs(s - b) >= Math.abs(c - d) / 2;
+    var condition4 = mflag && Math.abs(b - c) < tolerance;
+    var condition5 = !mflag && Math.abs(c - d) < tolerance;
+
+    if (condition1 || condition2 || condition3 || condition4 || condition5 || !isFinite(s)) {
+      s = (a + b) / 2;
+      mflag = true;
+    } else {
+      mflag = false;
+    }
+
+    var fs = f(s);
+    d = c;
+    c = b;
+    fc = fb;
+
+    if (fa * fs < 0) {
+      b = s;
+      fb = fs;
+    } else {
+      a = s;
+      fa = fs;
+    }
+
+    if (Math.abs(fa) < Math.abs(fb)) {
+      var tempA = a; a = b; b = tempA;
+      var tempFa = fa; fa = fb; fb = tempFa;
+    }
+
+    if (Math.abs(fb) < tolerance || Math.abs(b - a) < tolerance) {
+      return { sigma: b, iterations: iter, converged: true };
+    }
+  }
+
+  return { sigma: NaN, iterations: maxIterations, converged: false };
+}
+
+function parseInput(name) {
+  return parseFloat(document.isForm[name].value);
+}
+
+function impliedVolatility(marketPrice, S, K, r, q, T, optionType) {
+  if (!(S > 0) || !(K > 0) || !(T > 0) || !isFinite(r) || !isFinite(q) || !isFinite(marketPrice) || marketPrice < 0) {
+    return { sigma: NaN, error: "Invalid input. Require S > 0, K > 0, T > 0, and market price >= 0." };
+  }
+
+  var bounds = priceBounds(S, K, r, q, T, optionType);
+  var tolerance = 1e-8;
+  var epsilonBound = 1e-10;
+
+  if (marketPrice < bounds.lower - epsilonBound || marketPrice > bounds.upper + epsilonBound) {
+    return { sigma: NaN, error: "Market price is outside Black-Scholes no-arbitrage bounds." };
+  }
+
+  var lowerVol = 0.0001;
+  var upperVol = 5.0;
+
+  var objective = function (sigma) {
+    return blackScholesPrice(S, K, r, q, T, sigma, optionType) - marketPrice;
+  };
+
+  var fLower = objective(lowerVol);
+  var fUpper = objective(upperVol);
+
+  if (Math.abs(fLower) < tolerance) {
+    return { sigma: lowerVol, iterations: 0, converged: true, bounds: bounds };
+  }
+  if (Math.abs(fUpper) < tolerance) {
+    return { sigma: upperVol, iterations: 0, converged: true, bounds: bounds };
+  }
+  if (fLower * fUpper > 0) {
+    return { sigma: NaN, error: "Unable to bracket the root in [0.0001, 5.0]." };
+  }
+
+  var root = brentRoot(objective, lowerVol, upperVol, tolerance, 100);
+  if (!root.converged || !isFinite(root.sigma)) {
+    return { sigma: NaN, error: "Brent method did not converge within 100 iterations." };
+  }
+
+  root.bounds = bounds;
+  root.modelPrice = blackScholesPrice(S, K, r, q, T, root.sigma, optionType);
+  return root;
+}
+
+function formatNumber(x, digits) {
+  return isFinite(x) ? x.toFixed(digits) : "";
+}
+
+function Calculate() {
+  var optionType = document.isForm.optionType.value;
+  var S = parseInput("S");
+  var K = parseInput("K");
+  var T = parseInput("T");
+  var r = parseInput("r");
+  var q = parseInput("q");
+  var marketPrice = parseInput("marketPrice");
+
+  var result = impliedVolatility(marketPrice, S, K, r, q, T, optionType);
+
+  if (result.error) {
+    document.isForm.sigma.value = "";
+    document.isForm.modelPrice.value = "";
+    document.getElementById("ivMessage").innerHTML = result.error;
+    return;
+  }
+
+  document.isForm.sigma.value = formatNumber(result.sigma, 8);
+  document.isForm.modelPrice.value = formatNumber(result.modelPrice, 8);
+  document.getElementById("ivMessage").innerHTML = "Converged in " + result.iterations + " iterations. Bounds: [" + formatNumber(result.bounds.lower, 8) + ", " + formatNumber(result.bounds.upper, 8) + "].";
+}
+
+function Reset() {
+  document.isForm.optionType.value = "call";
+  document.isForm.S.value = "100";
+  document.isForm.K.value = "120";
+  document.isForm.T.value = "1";
+  document.isForm.r.value = "0.05";
+  document.isForm.q.value = "0.00";
+  document.isForm.marketPrice.value = "8.5";
+  document.isForm.sigma.value = "";
+  document.isForm.modelPrice.value = "";
+  document.getElementById("ivMessage").innerHTML = "";
+}
+</script>
 
 </head>
 <body>
@@ -41,129 +240,37 @@
     <div class="content_resize">
       <div class="mainbar">
         <div class="article">
-          <h2><span>Implied Volatility</span></h2><div class="clr"></div>
-          <p>Posted by <a href="contact.html">Chun-Yuan Chiu</a></p>
-
-          
-          
-          
-          
-          
-          
-          
-<script type="text/javascript">
-
-
-function sign(x){
-    if(x>0)         return 1;
-    else if(x<0)    return -1;
-    else            return 0;
-}
-
-function Bisect(f, a, b, absTol, relTol)
-{
-    var x;
-	var S;
-
-	S = Math.floor(Math.log((b-a)/(absTol + relTol*Math.min(Math.abs(a), Math.abs(b))))/Math.LN2);
-	x = (a+b)/2;
-
-	for(var k=0 ; k<S ; k++){
-		if(sign(f(x))*sign(f(a)) < 0)	b = x;
-		else							a = x;
-
-		x = a + (b-a)/2;
-	}
-	return x; 
-}
-
-function Calculate()
-{   // ��ƫ��Ъ���ƦW�r�@�w�n�� f�A�����ܡA�u�O�Ӧ��쪺�{���y��
-
-	document.isForm.s.value = Bisect(f, 0.001, 10, 0.000001, 0.000001);
-}
-
-function BScall(S, K, r, T, s)
-{
-	var d1 = (Math.log(S/K) + (r+s*s/2)*T)/(s*Math.sqrt(T));
-	var d2 = d1 - s*Math.sqrt(T)
-
-	return (S*NormalCDF(d1) - K*Math.exp(-r*T)*NormalCDF(d2));
-}
-
-function f(s){
-	var S = eval(document.isForm.S.value);
-	var K = eval(document.isForm.K.value);
-	var T = eval(document.isForm.T.value);
-	var r = eval(document.isForm.r.value);
-	var c = eval(document.isForm.c.value);
-
-    return (BScall(S, K, r, T, s)-c);
-}
-
-function Reset()
-{
-	document.isForm.S.value="100";
-	document.isForm.K.value="120";
-	document.isForm.T.value="1";
-	document.isForm.r.value="0.1";
-	document.isForm.c.value = "8.5";
-	
-	document.isForm.s.value="";
-}
-
-function NormalCDF(x)
-{
-	var L;
-	var K;
-	var w;
-		                              /* absolute error  < 7.5e-8 */   
-	var a1 = 0.31938153; 
-	var a2 = -0.356563782;
-	var a3 = 1.781477937;
-	var a4 = -1.821255978;
-	var a5 = 1.330274429;
-
-	L = Math.abs(x);
-	K = 1.0 / (1.0 + 0.2316419 * L);
-	w = 1.0 - 1.0 / Math.sqrt(2 * Math.PI) * Math.exp(-L *L / 2) * (K*(a1 + K *(a2 +K*( a3 +K*(a4+a5*K)))));
-
-	if (x < 0)  w= 1.0 - w;
-	return w;
-}
-
-
-</script>
-
+          <h2><span>Implied Volatility</span> Calculator</h2><div class="clr"></div>
+          <p>Posted by <a href="contact.html">Gary Pai</a></p>
 
 <form name="isForm">
-<p><B>Implied Volatility</B></p>
-<table border=0>
-<tr><td><b>Input:</b></td><td>
-<tr><td>Initial underlying asset price		</td><td><input name="S" value="100"></td><td></td></tr>
-<tr><td>Strike price				</td><td><input name="K" value="120"></td><td></td></tr>
-<tr><td>Time to maturity			</td><td><input name="T" value="1"></td><td>Years</td></tr>
-<tr><td>Risk free interest rate (annulized)	</td><td><input name="r" value="0.1"></td><td></td></tr>
-<tr><td>Call value                          </td><td><input name="c" value="8.5"></td><td></td></tr>
+<p><b>Black-Scholes Implied Volatility (Brent Method)</b></p>
+<table border="0">
+<tr><td><b>Input:</b></td><td></td><td></td></tr>
+<tr><td>Option type</td><td><select name="optionType"><option value="call">Call</option><option value="put">Put</option></select></td><td></td></tr>
+<tr><td>Underlying asset price (S)</td><td><input name="S" value="100" /></td><td></td></tr>
+<tr><td>Strike price (K)</td><td><input name="K" value="120" /></td><td></td></tr>
+<tr><td>Time to maturity (T)</td><td><input name="T" value="1" /></td><td>Years</td></tr>
+<tr><td>Risk-free rate (r, annualized)</td><td><input name="r" value="0.05" /></td><td></td></tr>
+<tr><td>Dividend yield (q, annualized)</td><td><input name="q" value="0.00" /></td><td></td></tr>
+<tr><td>Observed market option price</td><td><input name="marketPrice" value="8.5" /></td><td></td></tr>
 
-
-<tr><td><b>Output:</b></td><td>
-<tr><td>Implied volatility (annulized)</td><td><input name="s" value="" onFocus="blur();"></td><td></td></tr>
+<tr><td><b>Output:</b></td><td></td><td></td></tr>
+<tr><td>Implied volatility (annualized)</td><td><input name="sigma" value="" onfocus="blur();" /></td><td></td></tr>
+<tr><td>Model price at implied volatility</td><td><input name="modelPrice" value="" onfocus="blur();" /></td><td></td></tr>
 </table>
 <p>
-<input type=button name="reset" value="Reset" onClick="Reset();return true;">
-<input type=button name="go" value="Calculate" onClick="Calculate();return true;">
+<input type="button" name="reset" value="Reset" onclick="Reset();return true;" />
+<input type="button" name="go" value="Calculate" onclick="Calculate();return true;" />
 </p>
+<p id="ivMessage"></p>
 </form>
 
-<font size=-1>The root-finding algorithm used here is the bisection method. This calculator only works if the implied volatility is between 0.001 and 10. </font>
+<font size="-1">This calculator follows the procedure in <a href="paper/Implied_Volatility_Calculation.pdf">Implied Volatility Calculation</a>: input validation, no-arbitrage bounds checks, and Brent root-finding on [0.0001, 5.0].</font>
 
-          <p>Tagged: <a href="contact.html">Black-Scholes model</a>, <a href="contact.html">Implied Volatility</a>
-          <p>  <span>&nbsp;&bull;&nbsp;</span> Apr 2, 2013  <span>&nbsp;&bull;&nbsp;</span>  </p>
+          <p>Tagged: <a href="paper/Implied_Volatility_Calculation.pdf">Black-Scholes model</a>, <a href="paper/Implied_Volatility_Calculation.pdf">Implied Volatility</a></p>
+          <p><span>&nbsp;&bull;&nbsp;</span> Sep 22, 2026 <span>&nbsp;&bull;&nbsp;</span></p>
         </div>
-        
-
-
       </div>
       <div class="sidebar">
         <div class="searchform">
@@ -172,7 +279,7 @@ function NormalCDF(x)
         <div class="gadget">
           <h2 class="star"><span>Methods</span></h2><div class="clr"></div>
           <ul class="sb_menu">
-            
+
             <li><a href="AnalyticSolution.html">Analytic Solutions</a></li>
             <li><a href="MonteCarlo.html">Monte Carlo methods</a></li>
             <li><a href="NPDE.html">Numerical PDE Methods</a></li>
@@ -195,8 +302,9 @@ function NormalCDF(x)
     </div>
   </div>
 
-  
+
 
 </div>
 <div style="text-align:center">Copyright 2012-2026</div>
+</body>
 </html>
