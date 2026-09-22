@@ -292,6 +292,9 @@ function Calculate() {
     document.isForm.modelPriceBrent.value = "";
     document.isForm.sigmaNewton.value = "";
     document.isForm.modelPriceNewton.value = "";
+    document.isForm.bounds.value = "";
+    document.isForm.brentIterations.value = "";
+    document.isForm.newtonIterations.value = "";
     document.getElementById("ivMessage").textContent = result.error;
     return;
   }
@@ -300,7 +303,10 @@ function Calculate() {
   document.isForm.modelPriceBrent.value = result.brent.converged ? formatNumber(result.brent.modelPrice, 8) : "";
   document.isForm.sigmaNewton.value = result.newton.converged ? formatNumber(result.newton.sigma, 8) : "";
   document.isForm.modelPriceNewton.value = result.newton.converged ? formatNumber(result.newton.modelPrice, 8) : "";
-  document.getElementById("ivMessage").textContent = "Bounds: [" + formatNumber(result.bounds.lower, 8) + ", " + formatNumber(result.bounds.upper, 8) + "]. Brent iterations: " + result.brent.iterations + ". Newton iterations: " + result.newton.iterations + (result.newton.converged ? "." : " (Newton did not converge).");
+  document.isForm.bounds.value = "[" + formatNumber(result.bounds.lower, 8) + ", " + formatNumber(result.bounds.upper, 8) + "]";
+  document.isForm.brentIterations.value = result.brent.iterations;
+  document.isForm.newtonIterations.value = result.newton.iterations + (result.newton.converged ? "" : " (did not converge)");
+  document.getElementById("ivMessage").textContent = "";
 }
 
 function Reset() {
@@ -315,6 +321,9 @@ function Reset() {
   document.isForm.modelPriceBrent.value = "";
   document.isForm.sigmaNewton.value = "";
   document.isForm.modelPriceNewton.value = "";
+  document.isForm.bounds.value = "";
+  document.isForm.brentIterations.value = "";
+  document.isForm.newtonIterations.value = "";
   document.getElementById("ivMessage").textContent = "";
 }
 </script>
@@ -364,6 +373,9 @@ function Reset() {
 <tr><td>Model price at Brent implied volatility</td><td><input name="modelPriceBrent" value="" onfocus="blur();" /></td><td></td></tr>
 <tr><td>Implied volatility (Newton–Raphson, annualized)</td><td><input name="sigmaNewton" value="" onfocus="blur();" /></td><td></td></tr>
 <tr><td>Model price at Newton implied volatility</td><td><input name="modelPriceNewton" value="" onfocus="blur();" /></td><td></td></tr>
+<tr><td>No-arbitrage bounds</td><td><input name="bounds" value="" onfocus="blur();" /></td><td></td></tr>
+<tr><td>Brent iterations</td><td><input name="brentIterations" value="" onfocus="blur();" /></td><td></td></tr>
+<tr><td>Newton iterations</td><td><input name="newtonIterations" value="" onfocus="blur();" /></td><td></td></tr>
 </table>
 <p>
 <input type="button" name="reset" value="Reset" onclick="Reset();return true;" />
