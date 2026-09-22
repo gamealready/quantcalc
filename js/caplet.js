@@ -170,7 +170,7 @@
       "name": title || "QuantCalc Calculator",
       "applicationCategory": "FinanceApplication",
       "operatingSystem": "Any",
-      "url": window.location.href.split("#")[0],
+      "url": window.location.origin + window.location.pathname,
       "description": description,
       "offers": {
         "@type": "Offer",
