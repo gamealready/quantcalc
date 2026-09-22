@@ -29,6 +29,10 @@ function normalCDF(x) {
   return x < 0 ? 1.0 - w : w;
 }
 
+function normalPDF(x) {
+  return Math.exp(-0.5 * x * x) / Math.sqrt(2.0 * Math.PI);
+}
+
 function blackScholesPrice(S, K, r, q, T, sigma, optionType) {
   var sqrtT = Math.sqrt(T);
   var d1 = (Math.log(S / K) + (r - q + 0.5 * sigma * sigma) * T) / (sigma * sqrtT);
@@ -133,6 +137,52 @@ function brentRoot(f, lower, upper, tolerance, maxIterations) {
   return { sigma: NaN, iterations: maxIterations, converged: false, error: "MAX_ITERATIONS_EXCEEDED" };
 }
 
+function newtonRaphsonRoot(objective, vegaFn, lower, upper, tolerance, maxIterations, initialSigma) {
+  var sigma = initialSigma;
+  if (!isFinite(sigma) || sigma <= lower || sigma >= upper) {
+    sigma = 0.2;
+  }
+  if (sigma <= lower) {
+    sigma = lower + 1e-4;
+  }
+  if (sigma >= upper) {
+    sigma = upper - 1e-4;
+  }
+
+  for (var iter = 1; iter <= maxIterations; iter++) {
+    var fValue = objective(sigma);
+    if (!isFinite(fValue)) {
+      return { sigma: NaN, iterations: iter, converged: false, error: "INVALID_OBJECTIVE_EVALUATION" };
+    }
+    if (Math.abs(fValue) < tolerance) {
+      return { sigma: sigma, iterations: iter, converged: true };
+    }
+
+    var vegaValue = vegaFn(sigma);
+    if (!isFinite(vegaValue) || Math.abs(vegaValue) < 1e-12) {
+      return { sigma: NaN, iterations: iter, converged: false, error: "SMALL_OR_INVALID_VEGA" };
+    }
+
+    var nextSigma = sigma - fValue / vegaValue;
+    if (!isFinite(nextSigma)) {
+      return { sigma: NaN, iterations: iter, converged: false, error: "INVALID_NEWTON_STEP" };
+    }
+
+    if (nextSigma <= lower) {
+      nextSigma = lower + 1e-6;
+    } else if (nextSigma >= upper) {
+      nextSigma = upper - 1e-6;
+    }
+
+    if (Math.abs(nextSigma - sigma) < tolerance) {
+      return { sigma: nextSigma, iterations: iter, converged: true };
+    }
+    sigma = nextSigma;
+  }
+
+  return { sigma: NaN, iterations: maxIterations, converged: false, error: "MAX_ITERATIONS_EXCEEDED" };
+}
+
 function parseInput(name) {
   return parseFloat(document.isForm[name].value);
 }
@@ -152,50 +202,74 @@ function impliedVolatility(marketPrice, S, K, r, q, T, optionType) {
 
   var lowerVol = 0.0001;
   var upperVol = 5.0;
+  var sqrtT = Math.sqrt(T);
 
   var objective = function (sigma) {
     return blackScholesPrice(S, K, r, q, T, sigma, optionType) - marketPrice;
   };
+  var vega = function (sigma) {
+    var d1 = (Math.log(S / K) + (r - q + 0.5 * sigma * sigma) * T) / (sigma * sqrtT);
+    return S * Math.exp(-q * T) * normalPDF(d1) * sqrtT;
+  };
+
+  var brentResult;
+  var newtonResult;
 
   var fLower = objective(lowerVol);
   var fUpper = objective(upperVol);
 
   if (Math.abs(fLower) < tolerance) {
-    return {
+    brentResult = {
       sigma: lowerVol,
       iterations: 0,
       converged: true,
       bounds: bounds,
       modelPrice: blackScholesPrice(S, K, r, q, T, lowerVol, optionType)
     };
+    newtonResult = newtonRaphsonRoot(objective, vega, lowerVol, upperVol, tolerance, 100, 0.2);
+    if (newtonResult.converged && isFinite(newtonResult.sigma)) {
+      newtonResult.modelPrice = blackScholesPrice(S, K, r, q, T, newtonResult.sigma, optionType);
+    }
+    return { bounds: bounds, brent: brentResult, newton: newtonResult };
   }
   if (Math.abs(fUpper) < tolerance) {
-    return {
+    brentResult = {
       sigma: upperVol,
       iterations: 0,
       converged: true,
       bounds: bounds,
       modelPrice: blackScholesPrice(S, K, r, q, T, upperVol, optionType)
     };
+    newtonResult = newtonRaphsonRoot(objective, vega, lowerVol, upperVol, tolerance, 100, 0.2);
+    if (newtonResult.converged && isFinite(newtonResult.sigma)) {
+      newtonResult.modelPrice = blackScholesPrice(S, K, r, q, T, newtonResult.sigma, optionType);
+    }
+    return { bounds: bounds, brent: brentResult, newton: newtonResult };
   }
   if (fLower * fUpper > 0) {
     return { sigma: NaN, error: "Unable to bracket the root in [0.0001, 5.0]." };
   }
 
-  var root = brentRoot(objective, lowerVol, upperVol, tolerance, 100);
-  if (!root.converged || !isFinite(root.sigma)) {
-    if (root.error === "INVALID_ENDPOINT_EVALUATION") {
+  brentResult = brentRoot(objective, lowerVol, upperVol, tolerance, 100);
+  if (!brentResult.converged || !isFinite(brentResult.sigma)) {
+    if (brentResult.error === "INVALID_ENDPOINT_EVALUATION") {
       return { sigma: NaN, error: "Invalid endpoint evaluation during root search." };
     }
-    if (root.error === "UNBRACKETED_ROOT") {
+    if (brentResult.error === "UNBRACKETED_ROOT") {
       return { sigma: NaN, error: "Unable to bracket the root in [0.0001, 5.0]." };
     }
     return { sigma: NaN, error: "Brent method did not converge within 100 iterations." };
   }
 
-  root.bounds = bounds;
-  root.modelPrice = blackScholesPrice(S, K, r, q, T, root.sigma, optionType);
-  return root;
+  brentResult.bounds = bounds;
+  brentResult.modelPrice = blackScholesPrice(S, K, r, q, T, brentResult.sigma, optionType);
+
+  newtonResult = newtonRaphsonRoot(objective, vega, lowerVol, upperVol, tolerance, 100, 0.2);
+  if (newtonResult.converged && isFinite(newtonResult.sigma)) {
+    newtonResult.modelPrice = blackScholesPrice(S, K, r, q, T, newtonResult.sigma, optionType);
+  }
+
+  return { bounds: bounds, brent: brentResult, newton: newtonResult };
 }
 
 function formatNumber(x, digits) {
@@ -214,15 +288,19 @@ function Calculate() {
   var result = impliedVolatility(marketPrice, S, K, r, q, T, optionType);
 
   if (result.error) {
-    document.isForm.sigma.value = "";
-    document.isForm.modelPrice.value = "";
+    document.isForm.sigmaBrent.value = "";
+    document.isForm.modelPriceBrent.value = "";
+    document.isForm.sigmaNewton.value = "";
+    document.isForm.modelPriceNewton.value = "";
     document.getElementById("ivMessage").textContent = result.error;
     return;
   }
 
-  document.isForm.sigma.value = formatNumber(result.sigma, 8);
-  document.isForm.modelPrice.value = formatNumber(result.modelPrice, 8);
-  document.getElementById("ivMessage").textContent = "Converged in " + result.iterations + " iterations. Bounds: [" + formatNumber(result.bounds.lower, 8) + ", " + formatNumber(result.bounds.upper, 8) + "].";
+  document.isForm.sigmaBrent.value = result.brent.converged ? formatNumber(result.brent.sigma, 8) : "";
+  document.isForm.modelPriceBrent.value = result.brent.converged ? formatNumber(result.brent.modelPrice, 8) : "";
+  document.isForm.sigmaNewton.value = result.newton.converged ? formatNumber(result.newton.sigma, 8) : "";
+  document.isForm.modelPriceNewton.value = result.newton.converged ? formatNumber(result.newton.modelPrice, 8) : "";
+  document.getElementById("ivMessage").textContent = "Bounds: [" + formatNumber(result.bounds.lower, 8) + ", " + formatNumber(result.bounds.upper, 8) + "]. Brent iterations: " + result.brent.iterations + ". Newton iterations: " + result.newton.iterations + (result.newton.converged ? "." : " (Newton did not converge).");
 }
 
 function Reset() {
@@ -233,8 +311,10 @@ function Reset() {
   document.isForm.r.value = "0.05";
   document.isForm.q.value = "0.00";
   document.isForm.marketPrice.value = "8.5";
-  document.isForm.sigma.value = "";
-  document.isForm.modelPrice.value = "";
+  document.isForm.sigmaBrent.value = "";
+  document.isForm.modelPriceBrent.value = "";
+  document.isForm.sigmaNewton.value = "";
+  document.isForm.modelPriceNewton.value = "";
   document.getElementById("ivMessage").textContent = "";
 }
 </script>
@@ -280,8 +360,10 @@ function Reset() {
 <tr><td>Observed market option price</td><td><input name="marketPrice" value="8.5" /></td><td></td></tr>
 
 <tr><td><b>Output:</b></td><td></td><td></td></tr>
-<tr><td>Implied volatility (annualized)</td><td><input name="sigma" value="" onfocus="blur();" /></td><td></td></tr>
-<tr><td>Model price at implied volatility</td><td><input name="modelPrice" value="" onfocus="blur();" /></td><td></td></tr>
+<tr><td>Implied volatility (Brent, annualized)</td><td><input name="sigmaBrent" value="" onfocus="blur();" /></td><td></td></tr>
+<tr><td>Model price at Brent implied volatility</td><td><input name="modelPriceBrent" value="" onfocus="blur();" /></td><td></td></tr>
+<tr><td>Implied volatility (Newton–Raphson, annualized)</td><td><input name="sigmaNewton" value="" onfocus="blur();" /></td><td></td></tr>
+<tr><td>Model price at Newton implied volatility</td><td><input name="modelPriceNewton" value="" onfocus="blur();" /></td><td></td></tr>
 </table>
 <p>
 <input type="button" name="reset" value="Reset" onclick="Reset();return true;" />
