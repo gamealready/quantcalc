@@ -16,7 +16,7 @@
 <link href="style.css" rel="stylesheet" type="text/css" />
 <script type="text/javascript" src="js/caplet.js"></script>
 <style type="text/css">
-.faq-item h2 {
+.faq-item h3 {
   margin: 12px 0 6px 0;
   font-size: 18px;
 }
@@ -489,36 +489,36 @@ if (document.addEventListener) {
   <h2>Implied Volatility FAQ</h2>
 
   <div class="faq-item">
-    <h2>
+    <h3>
       <button id="faq-toggle-1" type="button" class="faq-toggle" data-answer-id="faq-answer-1" aria-expanded="false" aria-controls="faq-answer-1">What is implied volatility in this calculator?</button>
-    </h2>
+    </h3>
     <div id="faq-answer-1" class="faq-answer" role="region" aria-labelledby="faq-toggle-1" hidden="hidden">
       Implied volatility is the annualized volatility value that makes the Black-Scholes model price match your observed market option price for the selected call or put.
     </div>
   </div>
 
   <div class="faq-item">
-    <h2>
+    <h3>
       <button id="faq-toggle-2" type="button" class="faq-toggle" data-answer-id="faq-answer-2" aria-expanded="false" aria-controls="faq-answer-2">Why does the calculator show no-arbitrage bounds?</button>
-    </h2>
+    </h3>
     <div id="faq-answer-2" class="faq-answer" role="region" aria-labelledby="faq-toggle-2" hidden="hidden">
       The no-arbitrage bounds check validates that the market option price is theoretically feasible before solving for implied volatility, which prevents invalid or misleading outputs.
     </div>
   </div>
 
   <div class="faq-item">
-    <h2>
+    <h3>
       <button id="faq-toggle-3" type="button" class="faq-toggle" data-answer-id="faq-answer-3" aria-expanded="false" aria-controls="faq-answer-3">Why are Brent and Newton-Raphson results both displayed?</button>
-    </h2>
+    </h3>
     <div id="faq-answer-3" class="faq-answer" role="region" aria-labelledby="faq-toggle-3" hidden="hidden">
       Brent is robust and used as the primary root finder, while Newton-Raphson is shown for comparison and speed diagnostics when vega remains well behaved.
     </div>
   </div>
 
   <div class="faq-item">
-    <h2>
+    <h3>
       <button id="faq-toggle-4" type="button" class="faq-toggle" data-answer-id="faq-answer-4" aria-expanded="false" aria-controls="faq-answer-4">What does it mean if Newton-Raphson did not converge?</button>
-    </h2>
+    </h3>
     <div id="faq-answer-4" class="faq-answer" role="region" aria-labelledby="faq-toggle-4" hidden="hidden">
       It means the Newton updates did not meet the convergence tolerance in the allowed iterations, often because the local slope is too small or the initial guess is less suitable; Brent still provides a stable implied volatility when converged.
     </div>
