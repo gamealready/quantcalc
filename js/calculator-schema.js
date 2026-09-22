@@ -36,6 +36,10 @@
     return findMetaDescription() || findSummaryText() || ((title || "QuantCalc calculator") + " with interactive mathematical computations.");
   }
 
+  function currentPageUrl() {
+    return window.location.protocol + "//" + window.location.host + window.location.pathname;
+  }
+
   function injectSoftwareApplicationSchema() {
     var title = normalizeWhitespace(document.title) || findHeadingText() || "QuantCalc Calculator";
     var canonicalNode;
@@ -53,7 +57,7 @@
       "name": title,
       "applicationCategory": "FinanceApplication",
       "operatingSystem": "Any",
-      "url": canonicalNode && canonicalNode.href ? canonicalNode.href : (window.location.origin + window.location.pathname),
+      "url": canonicalNode && canonicalNode.href ? canonicalNode.href : currentPageUrl(),
       "description": buildDescription(title),
       "offers": {
         "@type": "Offer",
