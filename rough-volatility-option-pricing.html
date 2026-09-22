@@ -363,7 +363,8 @@ function toggleFaq(answerId, toggleButton) {
     return;
   }
   var isOpen = answerNode.classList.contains("open");
-  setCollapsibleState(answerNode, toggleButton, !isOpen);
+  var currentLabel = toggleButton.textContent;
+  setCollapsibleState(answerNode, toggleButton, !isOpen, currentLabel, currentLabel);
 }
 
 function setCollapsibleState(contentNode, toggleButton, openState, openLabelText, closedLabelText) {
