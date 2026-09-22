@@ -3,20 +3,6 @@
     return (value || "").replace(/\s+/g, " ").trim();
   }
 
-  function hasSoftwareApplicationSchema() {
-    var scripts = document.querySelectorAll('script[type="application/ld+json"]');
-    var i;
-    var pattern = /"@type"\s*:\s*"SoftwareApplication"/;
-
-    for (i = 0; i < scripts.length; i += 1) {
-      if (pattern.test(scripts[i].text || scripts[i].textContent || "")) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
   function findCanonicalLink() {
     return document.querySelector('link[rel="canonical"]');
   }
@@ -56,7 +42,7 @@
     var script;
     var schema;
 
-    if (document.getElementById("quantcalc-softwareapplication-schema") || hasSoftwareApplicationSchema()) {
+    if (document.getElementById("quantcalc-softwareapplication-schema")) {
       return;
     }
 
