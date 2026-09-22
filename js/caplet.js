@@ -119,9 +119,116 @@
     }
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", injectSearchForm);
-  } else {
+  function looksLikeCalculatorPage() {
+    var form = document.forms && document.forms.isForm;
+    var buttons;
+    var i;
+
+    if (!form) {
+      return false;
+    }
+
+    if (typeof window.Calculate === "function") {
+      return true;
+    }
+
+    buttons = form.querySelectorAll("input[type='button'], button");
+    for (i = 0; i < buttons.length; i += 1) {
+      var label = (buttons[i].value || buttons[i].textContent || "").toLowerCase();
+      if (/(calculate|compute|price|simulate|run)/.test(label)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  function findCanonicalLink() {
+    var links = document.getElementsByTagName("link");
+    var i;
+    for (i = 0; i < links.length; i += 1) {
+      var rel = links[i].getAttribute("rel");
+      if (rel && rel.toLowerCase() === "canonical") {
+        return links[i];
+      }
+    }
+    return null;
+  }
+
+  function findMetaDescriptionTag() {
+    var metas = document.getElementsByTagName("meta");
+    var i;
+    for (i = 0; i < metas.length; i += 1) {
+      var nameAttr = metas[i].getAttribute("name");
+      if (nameAttr && nameAttr.toLowerCase() === "description") {
+        return metas[i];
+      }
+    }
+    return null;
+  }
+
+  function injectSoftwareApplicationSchema() {
+    var canonicalNode;
+    var metaDescriptionNode;
+    var titleNode;
+    var title;
+    var description;
+    var canonicalUrl;
+    var schema;
+    var script;
+
+    if (document.getElementById("quantcalc-softwareapplication-schema")) {
+      return;
+    }
+
+    if (!looksLikeCalculatorPage()) {
+      return;
+    }
+
+    canonicalNode = findCanonicalLink();
+    metaDescriptionNode = findMetaDescriptionTag();
+    titleNode = document.getElementsByTagName("h1")[0];
+    title = document.title ? document.title.replace(/\s+/g, " ").trim() : "";
+    if (!title && titleNode) {
+      title = titleNode.textContent.replace(/\s+/g, " ").trim();
+    }
+    description = metaDescriptionNode && metaDescriptionNode.content
+      ? metaDescriptionNode.content.replace(/\s+/g, " ").trim()
+      : ((title || "QuantCalc calculator") + " with interactive mathematical computations.");
+    canonicalUrl = canonicalNode && canonicalNode.href
+      ? canonicalNode.href
+      : (window.location.origin + window.location.pathname);
+
+    schema = {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": title || "QuantCalc Calculator",
+      "applicationCategory": "FinanceApplication",
+      "operatingSystem": "Any",
+      "url": canonicalUrl,
+      "description": description,
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    };
+
+    script = document.createElement("script");
+    script.id = "quantcalc-softwareapplication-schema";
+    script.type = "application/ld+json";
+    script.text = JSON.stringify(schema);
+    document.getElementsByTagName("head")[0].appendChild(script);
+  }
+
+  function initializeSharedEnhancements() {
     injectSearchForm();
+    injectSoftwareApplicationSchema();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initializeSharedEnhancements);
+  } else {
+    initializeSharedEnhancements();
   }
 }());
