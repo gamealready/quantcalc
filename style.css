@@ -107,8 +107,10 @@ body {
 }
 
 /* Titles */
+.article h1,
 .article h2 {
     color: #0b1220;
     font-size: 24px;
     margin-bottom: 12px;
-    font-
+    font-weight: 700;
+}
