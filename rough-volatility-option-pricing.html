@@ -52,12 +52,7 @@
 }
 
 .model-equations-toggle {
-  border: 1px solid #d9d9d9;
-  background: #f7f7f7;
-  padding: 4px 10px;
-  font-size: 13px;
-  font-weight: bold;
-  cursor: pointer;
+  margin: 0;
 }
 
 .model-equations-content {
@@ -396,7 +391,7 @@ function toggleModelEquations() {
     return false;
   }
   var isOpen = contentNode.classList.contains("open");
-  setCollapsibleState(contentNode, toggleButton, !isOpen, "Hide model equations", "Show model equations");
+  setCollapsibleState(contentNode, toggleButton, !isOpen);
   return false;
 }
 
@@ -446,9 +441,12 @@ function initializeRoughVolPage() {
           </p>
           </form>
 
-          <h2 id="model-equations-heading" style="display:inline-block;margin-right:8px;">Model equations</h2>
-          <button id="model-equations-toggle" type="button" class="model-equations-toggle" aria-expanded="true" aria-controls="model-equations-content" aria-describedby="model-equations-heading">Hide model equations</button>
-          <div id="model-equations-content" class="model-equations-content open" role="region" aria-labelledby="model-equations-heading" style="margin: 18px 0 12px 0;">
+          <h2 id="model-equations-heading">Model equations</h2>
+          <div class="faq-item">
+            <h3 style="margin-top:6px;">
+              <button id="model-equations-toggle" type="button" class="faq-toggle model-equations-toggle" aria-expanded="false" aria-controls="model-equations-content">Show model equations</button>
+            </h3>
+            <div id="model-equations-content" class="faq-answer model-equations-content" role="region" aria-labelledby="model-equations-heading model-equations-toggle" hidden="hidden" style="margin: 0 0 12px 0;">
             <p>\( dY_t = \left(r - \frac{1}{2}\sigma_t^2\right)dt + \sigma_t\,dW_t^S \)</p>
             <p>\( dX_t = \nu\,dW_t^H - \alpha(X_t - m)dt,\ \text{with}\ X_t = \log \sigma_t \)</p>
             <p>\( d\langle W^S, W^H\rangle_t = \rho\,dt \)</p>
@@ -457,6 +455,7 @@ function initializeRoughVolPage() {
             <p><span style="font-size:smaller;">Leverage note: the PDF pseudo-code approximates the leverage effect by correlating the stock increment with the Gaussian innovations used to build the rough path. This page follows that same discrete-time approximation.</span></p>
 
             <p><span style="font-size:smaller;">Notes: the page uses browser-side Monte Carlo simulation and the covariance-matrix construction is cubic in the number of time steps. Smaller values of <b>N_steps</b> and <b>N_paths</b> will return results faster. The long-run level <b>\( m \)</b> is the mean of log-volatility, not of volatility itself.</span></p>
+            </div>
           </div>
 
           <div class="faq-section">
