@@ -50,6 +50,24 @@
 .faq-answer.open {
   display: block;
 }
+
+.model-equations-toggle {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.model-equations-content {
+  display: none;
+}
+
+.model-equations-content.open {
+  display: block;
+}
 </style>
 <script type="application/ld+json">
 {
@@ -365,9 +383,35 @@ function bindFaqToggleHandlers() {
   }
 }
 
+function toggleModelEquations() {
+  var contentNode = document.getElementById("model-equations-content");
+  var toggleButton = document.getElementById("model-equations-toggle");
+  if (!contentNode || !toggleButton) {
+    return false;
+  }
+  var isOpen = contentNode.className.indexOf("open") !== -1;
+  contentNode.className = isOpen ? "model-equations-content" : "model-equations-content open";
+  if (isOpen) {
+    contentNode.setAttribute("hidden", "hidden");
+  } else {
+    contentNode.removeAttribute("hidden");
+  }
+  toggleButton.setAttribute("aria-expanded", isOpen ? "false" : "true");
+  return false;
+}
+
+function bindModelEquationsToggleHandler() {
+  var toggleButton = document.getElementById("model-equations-toggle");
+  if (!toggleButton) {
+    return;
+  }
+  toggleButton.onclick = toggleModelEquations;
+}
+
 function initializeRoughVolPage() {
   Reset();
   bindFaqToggleHandlers();
+  bindModelEquationsToggleHandler();
 }
 </script>
 
@@ -402,8 +446,10 @@ function initializeRoughVolPage() {
           </p>
           </form>
 
-          <p><b>Model equations</b></p>
-          <div style="margin: 18px 0 12px 0;">
+          <h2>
+            <button id="model-equations-toggle" type="button" class="model-equations-toggle" aria-expanded="true" aria-controls="model-equations-content">Model equations</button>
+          </h2>
+          <div id="model-equations-content" class="model-equations-content open" role="region" aria-labelledby="model-equations-toggle" style="margin: 18px 0 12px 0;">
             <p>\( dY_t = \left(r - \frac{1}{2}\sigma_t^2\right)dt + \sigma_t\,dW_t^S \)</p>
             <p>\( dX_t = \nu\,dW_t^H - \alpha(X_t - m)dt,\ \text{with}\ X_t = \log \sigma_t \)</p>
             <p>\( d\langle W^S, W^H\rangle_t = \rho\,dt \)</p>
