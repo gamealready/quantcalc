@@ -22,8 +22,77 @@
 <title>Rough Volatility European Call Calculator | QuantCalc</title>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 <link href="style.css" rel="stylesheet" type="text/css" />
+<style type="text/css">
+.faq-item h3 {
+  margin: 12px 0 6px 0;
+  font-size: 18px;
+}
+
+.faq-toggle {
+  width: 100%;
+  text-align: left;
+  border: 1px solid #d9d9d9;
+  background: #f7f7f7;
+  padding: 10px 12px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.faq-answer {
+  display: none;
+  border: 1px solid #d9d9d9;
+  border-top: 0;
+  padding: 10px 12px;
+  background: #fff;
+}
+
+.faq-answer.open {
+  display: block;
+}
+</style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What does this rough volatility calculator compute?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "It estimates the price of a vanilla European call option under a rough fractional stochastic volatility model using Monte Carlo simulation in your browser."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why is the Hurst parameter H restricted to 0 to 0.5?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Rough volatility models use H less than 0.5 to represent rough, negatively correlated volatility increments. Values outside this range are not supported by this page's assumptions."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What does the 95% confidence interval mean?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "It is the Monte Carlo sampling interval built from the estimated standard error, showing a range where the simulated option price is likely to lie if you rerun the simulation."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How can I make the calculator run faster?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Reduce time steps and Monte Carlo paths. Both increase runtime, and covariance matrix construction and path simulation are the most expensive parts of the computation."
+      }
+    }
+  ]
+}
+</script>
 </head>
-<body onload="Reset();">
+<body onload="initializeRoughVolPage();">
 
 <div class="main">
 
@@ -270,6 +339,36 @@ function Reset() {
   document.isForm.runtime.value = "";
   document.getElementById("rough-vol-error").innerHTML = "";
 }
+
+function toggleFaq(answerId, toggleButton) {
+  var answerNode = document.getElementById(answerId);
+  if (!answerNode) {
+    return;
+  }
+  var isOpen = answerNode.className.indexOf("open") !== -1;
+  answerNode.className = isOpen ? "faq-answer" : "faq-answer open";
+  if (isOpen) {
+    answerNode.setAttribute("hidden", "hidden");
+  } else {
+    answerNode.removeAttribute("hidden");
+  }
+  toggleButton.setAttribute("aria-expanded", isOpen ? "false" : "true");
+}
+
+function bindFaqToggleHandlers() {
+  var toggleButtons = document.getElementsByClassName("faq-toggle");
+  for (var i = 0; i < toggleButtons.length; i++) {
+    toggleButtons[i].onclick = function () {
+      toggleFaq(this.getAttribute("data-answer-id"), this);
+      return false;
+    };
+  }
+}
+
+function initializeRoughVolPage() {
+  Reset();
+  bindFaqToggleHandlers();
+}
 </script>
 
           <p>This calculator follows the Monte Carlo pseudo-code in <a href="paper/rough_vol_with_pseudo_code.pdf">rough_vol_with_pseudo_code.pdf</a>. It prices a vanilla European call under the rough fractional stochastic volatility (RFSV) model by generating fractional Brownian motion paths, evolving log-volatility, and simulating the correlated stock path under the risk-neutral measure.</p>
@@ -315,6 +414,46 @@ function Reset() {
           <p><span style="font-size:smaller;">Leverage note: the PDF pseudo-code approximates the leverage effect by correlating the stock increment with the Gaussian innovations used to build the rough path. This page follows that same discrete-time approximation.</span></p>
 
           <p><span style="font-size:smaller;">Notes: the page uses browser-side Monte Carlo simulation and the covariance-matrix construction is cubic in the number of time steps. Smaller values of <b>N_steps</b> and <b>N_paths</b> will return results faster. The long-run level <b>\( m \)</b> is the mean of log-volatility, not of volatility itself.</span></p>
+
+          <div class="faq-section">
+            <h2>Rough Volatility FAQ</h2>
+
+            <div class="faq-item">
+              <h3>
+                <button id="faq-toggle-1" type="button" class="faq-toggle" data-answer-id="faq-answer-1" aria-expanded="false" aria-controls="faq-answer-1">What does this rough volatility calculator compute?</button>
+              </h3>
+              <div id="faq-answer-1" class="faq-answer" role="region" aria-labelledby="faq-toggle-1" hidden="hidden">
+                It estimates the price of a vanilla European call option under a rough fractional stochastic volatility model using Monte Carlo simulation in your browser.
+              </div>
+            </div>
+
+            <div class="faq-item">
+              <h3>
+                <button id="faq-toggle-2" type="button" class="faq-toggle" data-answer-id="faq-answer-2" aria-expanded="false" aria-controls="faq-answer-2">Why is the Hurst parameter H restricted to 0 to 0.5?</button>
+              </h3>
+              <div id="faq-answer-2" class="faq-answer" role="region" aria-labelledby="faq-toggle-2" hidden="hidden">
+                Rough volatility models use H less than 0.5 to represent rough, negatively correlated volatility increments. Values outside this range are not supported by this page's assumptions.
+              </div>
+            </div>
+
+            <div class="faq-item">
+              <h3>
+                <button id="faq-toggle-3" type="button" class="faq-toggle" data-answer-id="faq-answer-3" aria-expanded="false" aria-controls="faq-answer-3">What does the 95% confidence interval mean?</button>
+              </h3>
+              <div id="faq-answer-3" class="faq-answer" role="region" aria-labelledby="faq-toggle-3" hidden="hidden">
+                It is the Monte Carlo sampling interval built from the estimated standard error, showing a range where the simulated option price is likely to lie if you rerun the simulation.
+              </div>
+            </div>
+
+            <div class="faq-item">
+              <h3>
+                <button id="faq-toggle-4" type="button" class="faq-toggle" data-answer-id="faq-answer-4" aria-expanded="false" aria-controls="faq-answer-4">How can I make the calculator run faster?</button>
+              </h3>
+              <div id="faq-answer-4" class="faq-answer" role="region" aria-labelledby="faq-toggle-4" hidden="hidden">
+                Reduce time steps and Monte Carlo paths. Both increase runtime, and covariance matrix construction and path simulation are the most expensive parts of the computation.
+              </div>
+            </div>
+          </div>
 
           <p>Tagged: <a href="paper/rough_vol_with_pseudo_code.pdf">Rough Volatility</a>, <a href="paper/rough_vol_with_pseudo_code.pdf">RFSV</a>, <a href="paper/rough_vol_with_pseudo_code.pdf">Monte Carlo</a></p>
           <p>  <span>&nbsp;&bull;&nbsp;</span> First Version: Sep 21, 2026  <span>&nbsp;&bull;&nbsp;</span>  </p>
