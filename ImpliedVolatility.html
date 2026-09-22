@@ -308,7 +308,7 @@ function Calculate() {
   document.isForm.boundsUpper.value = formatNumber(result.bounds.upper, 8);
   document.isForm.iterationsBrent.value = result.brent.iterations;
   document.isForm.iterationsNewton.value = result.newton.iterations;
-  document.getElementById("ivMessage").textContent = result.newton.converged ? "" : "Newton-Raphson did not converge.";
+  document.getElementById("ivMessage").textContent = "Bounds: [" + formatNumber(result.bounds.lower, 8) + ", " + formatNumber(result.bounds.upper, 8) + "]. Brent iterations: " + result.brent.iterations + ". Newton iterations: " + result.newton.iterations + (result.newton.converged ? "." : " (Newton did not converge).");
 }
 
 function Reset() {
@@ -385,7 +385,7 @@ function Reset() {
 <input type="button" name="reset" value="Reset" onclick="Reset();return true;" />
 <input type="button" name="go" value="Calculate" onclick="Calculate();return true;" />
 </p>
-<p id="ivMessage"></p>
+<p id="ivMessage" aria-live="polite"></p>
 </form>
 
 <font size="-1">This calculator follows the procedure in <a href="paper/Implied_Volatility_Calculation.pdf">Implied Volatility Calculation</a>: input validation, no-arbitrage bounds checks, and Brent root-finding on [0.0001, 5.0].</font>
