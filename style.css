@@ -41,22 +41,23 @@ body {
 
 .logo h1 a,
 .logo .site_title a {
-    color: #fff;
+    color: #819FF7;
     text-decoration: none;
-    font-weight: 800;
-    font-size: 28px;
+    font: normal 42px/1.2em Arial, Helvetica, sans-serif;
+    letter-spacing: -3px;
 }
 
 .logo h1 span,
 .logo .site_title span {
-    color: #39a0ed;
+    color: #3e2d27;
 }
 
 .logo small {
     display: block;
-    font-size: 12px;
-    color: #aab4c6;
-    font-weight: 400;
+    padding-left: 100px;
+    font: normal 12px/1.2em Arial, Helvetica, sans-serif;
+    color: #959595;
+    letter-spacing: normal;
 }
 
 /* Navigation bar */
