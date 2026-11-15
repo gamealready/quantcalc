@@ -1,0 +1,333 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<script>
+  window.MathJax = {
+    tex: {
+      inlineMath: [['$', '$'], ['\\(', '\\)']]
+    }
+  };
+</script>
+<script id="MathJax-script" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-N0YL0FX070"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){window.dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-N0YL0FX070');
+</script>
+<title>Local Volatility Calculator | QuantCalc</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="description" content="Estimate Dupire local volatility from a nearby implied-volatility surface using finite differences of Black-Scholes call prices." />
+<link rel="canonical" href="https://www.quantcalc.net/local-volatility-calculator.html" />
+<link href="style.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="js/caplet.js"></script>
+<script type="text/javascript" src="js/calculator-schema.js"></script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How does the local volatility calculator work?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "It converts five implied-volatility quotes around the target strike and maturity into Black-Scholes call prices, estimates the Dupire derivatives with central finite differences, and reports the resulting local volatility."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What does the local volatility result represent?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The result is the instantaneous volatility at the selected spot, strike, and maturity implied by the supplied risk-neutral call-price surface under the Dupire formula."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why can the calculator return an error for some quotes?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The Dupire calculation requires positive strike convexity and non-negative forward call-price growth. Noisy, sparse, or arbitrage-inconsistent implied-volatility quotes can violate these conditions or produce an unstable finite-difference estimate."
+      }
+    }
+  ]
+}
+</script>
+</head>
+<body>
+<div class="main">
+  <div class="header">
+    <div class="header_resize">
+      <div class="logo"><div class="site_title"><a href="index.html">Quant<span>Calc</span> <small>Quantitative Finance Calculators for Pricing, Calibration &amp; Risk</small></a></div></div>
+      <div class="menu_nav">
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li class="active"><a href="pricing.html">Pricing</a></li>
+          <li><a href="calibration.html">Calibration</a></li>
+          <li><a href="paper.html">Paper</a></li>
+          <li><a href="risk.html">Risk Management</a></li>
+          <li><a href="about.html">About us</a></li>
+          <li><a href="contact.html">Contact us</a></li>
+        </ul>
+      </div>
+      <div class="clr"></div>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="content_resize">
+      <div class="mainbar">
+        <div class="article">
+          <h1>Local Volatility Calculator</h1>
+          <p>Estimate the Dupire local volatility implied by a small neighborhood of an option implied-volatility surface. The calculator converts each supplied quote to a European call price, then estimates strike and maturity derivatives using central finite differences.</p>
+
+          <form name="localVolForm" id="local-vol-form">
+            <p><b>Market and finite-difference inputs</b></p>
+            <table border="0">
+              <tr><td>Spot price S<sub>0</sub></td><td><input name="spot" type="number" step="any" value="100" /></td><td>positive</td></tr>
+              <tr><td>Target strike K</td><td><input name="strike" type="number" step="any" value="100" /></td><td>same units as spot</td></tr>
+              <tr><td>Target maturity T</td><td><input name="maturity" type="number" step="any" value="1" /></td><td>years</td></tr>
+              <tr><td>Risk-free rate r</td><td><input name="rate" type="number" step="any" value="0.03" /></td><td>annualized decimal</td></tr>
+              <tr><td>Dividend yield q</td><td><input name="yield" type="number" step="any" value="0.01" /></td><td>annualized decimal</td></tr>
+              <tr><td>Strike step ΔK</td><td><input name="strikeStep" type="number" step="any" value="1" /></td><td>must be less than K</td></tr>
+              <tr><td>Maturity step ΔT</td><td><input name="timeStep" type="number" step="any" value="0.1" /></td><td>must be less than T</td></tr>
+            </table>
+
+            <p><b>Implied volatilities near (K, T)</b></p>
+            <table border="0">
+              <tr><td>σ<sub>imp</sub>(K − ΔK, T)</td><td><input name="volStrikeMinus" type="number" step="any" value="0.205" /></td><td>decimal (0.20 = 20%)</td></tr>
+              <tr><td>σ<sub>imp</sub>(K, T)</td><td><input name="volCenter" type="number" step="any" value="0.2" /></td><td>decimal (0.20 = 20%)</td></tr>
+              <tr><td>σ<sub>imp</sub>(K + ΔK, T)</td><td><input name="volStrikePlus" type="number" step="any" value="0.205" /></td><td>decimal (0.20 = 20%)</td></tr>
+              <tr><td>σ<sub>imp</sub>(K, T − ΔT)</td><td><input name="volTimeMinus" type="number" step="any" value="0.195" /></td><td>decimal (0.20 = 20%)</td></tr>
+              <tr><td>σ<sub>imp</sub>(K, T + ΔT)</td><td><input name="volTimePlus" type="number" step="any" value="0.205" /></td><td>decimal (0.20 = 20%)</td></tr>
+            </table>
+
+            <p><b>Results</b></p>
+            <table border="0">
+              <tr><td>Local volatility</td><td><input name="localVol" type="text" readonly="readonly" value="" /></td><td>annualized %</td></tr>
+              <tr><td>Local variance</td><td><input name="localVariance" type="text" readonly="readonly" value="" /></td><td>per year</td></tr>
+              <tr><td>Target call price C(K,T)</td><td><input name="callPrice" type="text" readonly="readonly" value="" /></td><td></td></tr>
+              <tr><td>Strike derivative C<sub>K</sub></td><td><input name="strikeDerivative" type="text" readonly="readonly" value="" /></td><td></td></tr>
+              <tr><td>Strike convexity C<sub>KK</sub></td><td><input name="strikeConvexity" type="text" readonly="readonly" value="" /></td><td></td></tr>
+              <tr><td>Maturity derivative C<sub>T</sub></td><td><input name="timeDerivative" type="text" readonly="readonly" value="" /></td><td></td></tr>
+            </table>
+            <p id="local-vol-error" role="alert" aria-live="assertive" style="color:#cc0000;font-weight:bold;"></p>
+            <p>
+              <input type="button" value="Reset" onclick="resetLocalVolCalculator();return false;" />
+              <input type="button" value="Calculate" onclick="calculateLocalVol();return false;" />
+            </p>
+          </form>
+
+          <h2>Dupire formula and method</h2>
+          <p>For a European call price surface C(K,T), with continuously compounded risk-free rate r and dividend yield q, the forward Dupire formula is:</p>
+          <p>\[
+            \sigma_{\mathrm{loc}}^2(K,T) =
+            \frac{C_T + (r-q)K C_K + qC}
+            {\frac{1}{2}K^2 C_{KK}}.
+          \]</p>
+          <p>The inputs approximate this price surface at (K − ΔK,T), (K,T), (K + ΔK,T), (K,T − ΔT), and (K,T + ΔT). The displayed derivatives and local volatility are therefore sensitive to quote noise and step sizes. Use a smooth, arbitrage-aware implied-volatility surface and check stability by changing ΔK and ΔT. The calculator does not fit or validate a complete volatility surface.</p>
+
+          <h2>Local Volatility FAQ</h2>
+          <h3>Does this use implied volatility directly as local volatility?</h3>
+          <p>No. Implied volatilities are first converted into call prices. Dupire's formula uses the derivatives of those prices with respect to strike and maturity, so local and implied volatility generally differ.</p>
+          <h3>Why must T be larger than ΔT?</h3>
+          <p>The central maturity difference requires quotes at both T − ΔT and T + ΔT. The earlier maturity must remain positive.</p>
+          <h3>What should I do if the local variance is not positive?</h3>
+          <p>Check that the quotes are smooth and arbitrage-consistent, then try a less noisy surface or different finite-difference steps. A non-positive estimate is not replaced with an absolute value or clipped result.</p>
+          <p>Tagged: <a href="ImpliedVolatility.html">Implied Volatility</a>, <a href="pricing.html">Option Pricing</a>, Dupire Local Volatility</p>
+        </div>
+      </div>
+      <div class="sidebar">
+        <div class="searchform"></div>
+        <div class="gadget">
+          <h2 class="star"><span>Methods</span></h2><div class="clr"></div>
+          <ul class="sb_menu">
+            <li><a href="AnalyticSolution.html">Analytic Solutions</a></li>
+            <li><a href="MonteCarlo.html">Monte Carlo Methods</a></li>
+            <li><a href="NPDE.html">Numerical PDE Methods</a></li>
+            <li><a href="Tree.html">Tree Methods</a></li>
+            <li><a href="FFT.html">FFT Based Pricing Methods</a></li>
+          </ul>
+        </div>
+        <div class="gadget">
+          <h2 class="star"><span>Derivatives Markets</span></h2><div class="clr"></div>
+          <ul class="ex_menu">
+            <li><a href="Stock.html" title="stock Options">Stock Options</a><br />Including Exotic Options</li>
+            <li><a href="InterestRate.html">Interest Rate Derivatives</a><br />Short Rate Model</li>
+            <li><a href="Credit.html" title="Credit Derivatives">Credit Derivatives</a><br />Structural Models and Reduced Models</li>
+          </ul>
+        </div>
+      </div>
+      <div class="clr"></div>
+    </div>
+  </div>
+</div>
+<div style="text-align:center">Copyright 2012-2026</div>
+<script type="text/javascript">
+function localVolForm() {
+  return document.forms["localVolForm"];
+}
+
+function localVolInput(name) {
+  var value = Number(localVolForm().elements[name].value);
+  if (!isFinite(value)) {
+    throw new Error("Please enter a valid number for " + name + ".");
+  }
+  return value;
+}
+
+function normalCdf(x) {
+  var a1 = 0.31938153;
+  var a2 = -0.356563782;
+  var a3 = 1.781477937;
+  var a4 = -1.821255978;
+  var a5 = 1.330274429;
+  var absoluteX = Math.abs(x);
+  var k = 1 / (1 + 0.2316419 * absoluteX);
+  var tail = Math.exp(-0.5 * absoluteX * absoluteX) / Math.sqrt(2 * Math.PI)
+    * k * (a1 + k * (a2 + k * (a3 + k * (a4 + a5 * k))));
+  return x < 0 ? tail : 1 - tail;
+}
+
+function blackScholesCall(spot, strike, rate, dividend, maturity, volatility) {
+  var rootTime = Math.sqrt(maturity);
+  var d1 = (Math.log(spot / strike) + (rate - dividend + 0.5 * volatility * volatility) * maturity)
+    / (volatility * rootTime);
+  var d2 = d1 - volatility * rootTime;
+  return spot * Math.exp(-dividend * maturity) * normalCdf(d1)
+    - strike * Math.exp(-rate * maturity) * normalCdf(d2);
+}
+
+function formatLocalVol(value) {
+  return value.toFixed(8);
+}
+
+function calculateLocalVol() {
+  var errorNode = document.getElementById("local-vol-error");
+  var form = localVolForm();
+  var name;
+  var spot;
+  var strike;
+  var maturity;
+  var rate;
+  var dividend;
+  var strikeStep;
+  var timeStep;
+  var volStrikeMinus;
+  var volCenter;
+  var volStrikePlus;
+  var volTimeMinus;
+  var volTimePlus;
+  var callCenter;
+  var callStrikeMinus;
+  var callStrikePlus;
+  var callTimeMinus;
+  var callTimePlus;
+  var strikeDerivative;
+  var strikeConvexity;
+  var timeDerivative;
+  var denominator;
+  var numerator;
+  var localVariance;
+
+  errorNode.textContent = "";
+  for (name in form.elements) {
+    if (Object.prototype.hasOwnProperty.call(form.elements, name) && form.elements[name].tagName === "INPUT"
+        && form.elements[name].type !== "button") {
+      if (form.elements[name].readOnly) {
+        form.elements[name].value = "";
+      }
+    }
+  }
+
+  try {
+    spot = localVolInput("spot");
+    strike = localVolInput("strike");
+    maturity = localVolInput("maturity");
+    rate = localVolInput("rate");
+    dividend = localVolInput("yield");
+    strikeStep = localVolInput("strikeStep");
+    timeStep = localVolInput("timeStep");
+    volStrikeMinus = localVolInput("volStrikeMinus");
+    volCenter = localVolInput("volCenter");
+    volStrikePlus = localVolInput("volStrikePlus");
+    volTimeMinus = localVolInput("volTimeMinus");
+    volTimePlus = localVolInput("volTimePlus");
+
+    if (spot <= 0 || strike <= 0 || maturity <= 0) {
+      throw new Error("Spot, strike, and maturity must be positive.");
+    }
+    if (strikeStep <= 0 || strikeStep >= strike) {
+      throw new Error("Strike step must be positive and smaller than the target strike.");
+    }
+    if (timeStep <= 0 || timeStep >= maturity) {
+      throw new Error("Maturity step must be positive and smaller than the target maturity.");
+    }
+    if ([volStrikeMinus, volCenter, volStrikePlus, volTimeMinus, volTimePlus].some(function (volatility) {
+      return volatility <= 0 || volatility > 5;
+    })) {
+      throw new Error("Each implied volatility must be greater than 0 and no greater than 5 (500%).");
+    }
+
+    callCenter = blackScholesCall(spot, strike, rate, dividend, maturity, volCenter);
+    callStrikeMinus = blackScholesCall(spot, strike - strikeStep, rate, dividend, maturity, volStrikeMinus);
+    callStrikePlus = blackScholesCall(spot, strike + strikeStep, rate, dividend, maturity, volStrikePlus);
+    callTimeMinus = blackScholesCall(spot, strike, rate, dividend, maturity - timeStep, volTimeMinus);
+    callTimePlus = blackScholesCall(spot, strike, rate, dividend, maturity + timeStep, volTimePlus);
+
+    strikeDerivative = (callStrikePlus - callStrikeMinus) / (2 * strikeStep);
+    strikeConvexity = (callStrikePlus - 2 * callCenter + callStrikeMinus) / (strikeStep * strikeStep);
+    timeDerivative = (callTimePlus - callTimeMinus) / (2 * timeStep);
+    denominator = 0.5 * strike * strike * strikeConvexity;
+    numerator = timeDerivative + (rate - dividend) * strike * strikeDerivative + dividend * callCenter;
+
+    if (strikeConvexity <= 0 || denominator <= 0) {
+      throw new Error("Estimated call-price convexity is not positive. Check the quotes and finite-difference steps.");
+    }
+    localVariance = numerator / denominator;
+    if (!isFinite(localVariance) || localVariance <= 0) {
+      throw new Error("The Dupire local variance is not positive. Check the quotes and finite-difference steps.");
+    }
+
+    form.elements["localVol"].value = formatLocalVol(100 * Math.sqrt(localVariance)) + "%";
+    form.elements["localVariance"].value = formatLocalVol(localVariance);
+    form.elements["callPrice"].value = formatLocalVol(callCenter);
+    form.elements["strikeDerivative"].value = formatLocalVol(strikeDerivative);
+    form.elements["strikeConvexity"].value = formatLocalVol(strikeConvexity);
+    form.elements["timeDerivative"].value = formatLocalVol(timeDerivative);
+  } catch (error) {
+    errorNode.textContent = error.message;
+  }
+  return false;
+}
+
+function resetLocalVolCalculator() {
+  var form = localVolForm();
+  form.elements["spot"].value = "100";
+  form.elements["strike"].value = "100";
+  form.elements["maturity"].value = "1";
+  form.elements["rate"].value = "0.03";
+  form.elements["yield"].value = "0.01";
+  form.elements["strikeStep"].value = "1";
+  form.elements["timeStep"].value = "0.1";
+  form.elements["volStrikeMinus"].value = "0.205";
+  form.elements["volCenter"].value = "0.2";
+  form.elements["volStrikePlus"].value = "0.205";
+  form.elements["volTimeMinus"].value = "0.195";
+  form.elements["volTimePlus"].value = "0.205";
+  form.elements["localVol"].value = "";
+  form.elements["localVariance"].value = "";
+  form.elements["callPrice"].value = "";
+  form.elements["strikeDerivative"].value = "";
+  form.elements["strikeConvexity"].value = "";
+  form.elements["timeDerivative"].value = "";
+  document.getElementById("local-vol-error").textContent = "";
+  return false;
+}
+
+resetLocalVolCalculator();
+</script>
+</body>
+</html>
