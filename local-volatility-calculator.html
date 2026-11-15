@@ -97,11 +97,11 @@
 
             <p><b>Implied volatilities near (K, T)</b></p>
             <table border="0">
-              <tr><td>σ<sub>imp</sub>(K − ΔK, T)</td><td><input name="volStrikeMinus" type="number" step="any" value="0.205" /></td><td>decimal (0.20 = 20%)</td></tr>
+              <tr><td>σ<sub>imp</sub>(K − ΔK, T)</td><td><input name="volStrikeMinus" type="number" step="any" value="0.2" /></td><td>decimal (0.20 = 20%)</td></tr>
               <tr><td>σ<sub>imp</sub>(K, T)</td><td><input name="volCenter" type="number" step="any" value="0.2" /></td><td>decimal (0.20 = 20%)</td></tr>
-              <tr><td>σ<sub>imp</sub>(K + ΔK, T)</td><td><input name="volStrikePlus" type="number" step="any" value="0.205" /></td><td>decimal (0.20 = 20%)</td></tr>
-              <tr><td>σ<sub>imp</sub>(K, T − ΔT)</td><td><input name="volTimeMinus" type="number" step="any" value="0.195" /></td><td>decimal (0.20 = 20%)</td></tr>
-              <tr><td>σ<sub>imp</sub>(K, T + ΔT)</td><td><input name="volTimePlus" type="number" step="any" value="0.205" /></td><td>decimal (0.20 = 20%)</td></tr>
+              <tr><td>σ<sub>imp</sub>(K + ΔK, T)</td><td><input name="volStrikePlus" type="number" step="any" value="0.2" /></td><td>decimal (0.20 = 20%)</td></tr>
+              <tr><td>σ<sub>imp</sub>(K, T − ΔT)</td><td><input name="volTimeMinus" type="number" step="any" value="0.2" /></td><td>decimal (0.20 = 20%)</td></tr>
+              <tr><td>σ<sub>imp</sub>(K, T + ΔT)</td><td><input name="volTimePlus" type="number" step="any" value="0.2" /></td><td>decimal (0.20 = 20%)</td></tr>
             </table>
 
             <p><b>Results</b></p>
@@ -171,8 +171,9 @@ function localVolForm() {
 }
 
 function localVolInput(name) {
-  var value = Number(localVolForm().elements[name].value);
-  if (!isFinite(value)) {
+  var raw = localVolForm().elements[name].value;
+  var value = Number(raw);
+  if (raw === "" || !isFinite(value)) {
     throw new Error("Please enter a valid number for " + name + ".");
   }
   return value;
@@ -207,7 +208,6 @@ function formatLocalVol(value) {
 function calculateLocalVol() {
   var errorNode = document.getElementById("local-vol-error");
   var form = localVolForm();
-  var name;
   var spot;
   var strike;
   var maturity;
@@ -233,14 +233,12 @@ function calculateLocalVol() {
   var localVariance;
 
   errorNode.textContent = "";
-  for (name in form.elements) {
-    if (Object.prototype.hasOwnProperty.call(form.elements, name) && form.elements[name].tagName === "INPUT"
-        && form.elements[name].type !== "button") {
-      if (form.elements[name].readOnly) {
-        form.elements[name].value = "";
-      }
-    }
-  }
+  form.elements["localVol"].value = "";
+  form.elements["localVariance"].value = "";
+  form.elements["callPrice"].value = "";
+  form.elements["strikeDerivative"].value = "";
+  form.elements["strikeConvexity"].value = "";
+  form.elements["timeDerivative"].value = "";
 
   try {
     spot = localVolInput("spot");
@@ -312,11 +310,11 @@ function resetLocalVolCalculator() {
   form.elements["yield"].value = "0.01";
   form.elements["strikeStep"].value = "1";
   form.elements["timeStep"].value = "0.1";
-  form.elements["volStrikeMinus"].value = "0.205";
+  form.elements["volStrikeMinus"].value = "0.2";
   form.elements["volCenter"].value = "0.2";
-  form.elements["volStrikePlus"].value = "0.205";
-  form.elements["volTimeMinus"].value = "0.195";
-  form.elements["volTimePlus"].value = "0.205";
+  form.elements["volStrikePlus"].value = "0.2";
+  form.elements["volTimeMinus"].value = "0.2";
+  form.elements["volTimePlus"].value = "0.2";
   form.elements["localVol"].value = "";
   form.elements["localVariance"].value = "";
   form.elements["callPrice"].value = "";
