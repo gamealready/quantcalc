@@ -369,6 +369,18 @@ window.quantcalcSearchIndex = [
     ]
   },
   {
+    "url": "local-volatility-calculator.html",
+    "title": "Local Volatility Calculator",
+    "section": "Pricing",
+    "summary": "Estimate Dupire local volatility from nearby implied-volatility quotes using finite differences of Black-Scholes call prices",
+    "keywords": [
+      "Local Volatility",
+      "Dupire Formula",
+      "Implied Volatility Surface",
+      "European Call"
+    ]
+  },
+  {
     "url": "MC_asian.html",
     "title": "Discrete Asian Call Option Price",
     "section": "Pricing",
