@@ -369,6 +369,19 @@ window.quantcalcSearchIndex = [
     ]
   },
   {
+    "url": "heston-option-calculator.html",
+    "title": "Heston Stochastic Volatility Option Calculator",
+    "section": "Pricing",
+    "summary": "Price European calls and puts and explore the Heston stochastic-volatility model's implied-volatility smile against Black-Scholes",
+    "keywords": [
+      "Heston model",
+      "stochastic volatility",
+      "volatility smile",
+      "volatility skew",
+      "European option"
+    ]
+  },
+  {
     "url": "local-volatility-calculator.html",
     "title": "Local Volatility Calculator",
     "section": "Pricing",

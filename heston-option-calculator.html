@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Heston Stochastic Volatility Option Calculator | QuantCalc</title>
+  <meta name="description" content="Price European calls and puts with the Heston stochastic-volatility model and compare its implied-volatility smile with a flat-volatility Black-Scholes benchmark." />
+  <link rel="canonical" href="https://www.quantcalc.net/heston-option-calculator.html" />
+  <link href="style.css" rel="stylesheet" type="text/css" />
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']]
+      }
+    };
+  </script>
+  <script id="MathJax-script" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <script type="text/javascript" src="js/caplet.js"></script>
+  <script type="text/javascript" src="js/heston.js"></script>
+  <script type="text/javascript" src="js/calculator-schema.js"></script>
+</head>
+<body>
+  <div class="main">
+    <div class="header">
+      <div class="header_resize">
+        <div class="logo"><div class="site_title"><a href="index.html">Quant<span>Calc</span> <small>Quantitative Finance Calculators for Pricing, Calibration &amp; Risk</small></a></div></div>
+        <div class="menu_nav">
+          <ul>
+            <li><a href="index.html">Home</a></li>
+            <li class="active"><a href="pricing.html">Pricing</a></li>
+            <li><a href="calibration.html">Calibration</a></li>
+            <li><a href="paper.html">Paper</a></li>
+            <li><a href="risk.html">Risk Management</a></li>
+            <li><a href="about.html">About us</a></li>
+            <li><a href="contact.html">Contact us</a></li>
+          </ul>
+        </div>
+        <div class="clr"></div>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="content_resize">
+        <div class="mainbar">
+          <div class="article">
+            <h1>Heston Stochastic Volatility Option Calculator</h1>
+            <p>Price European calls and puts using the Heston model's characteristic function and numerical integration. All calculations run in your browser.</p>
+
+            <h2>Why use Heston?</h2>
+            <p>Black–Scholes assumes one constant volatility, so its implied volatility is flat across strikes. Heston makes variance random and correlates variance shocks with asset returns. This captures the volatility smile or skew seen across option strikes—especially the equity downside skew controlled in part by the correlation parameter \(\rho\).</p>
+
+            <form name="hestonForm" id="heston-form">
+              <h2>Model and market inputs</h2>
+              <table border="0">
+                <tr><td>Spot price S<sub>0</sub></td><td><input type="number" step="any" name="spot" data-label="spot price" value="100" /></td></tr>
+                <tr><td>Call/put strike K</td><td><input type="number" step="any" name="strike" data-label="strike" value="100" /></td></tr>
+                <tr><td>Maturity T</td><td><input type="number" step="any" name="maturity" data-label="maturity" value="1" /></td><td>years</td></tr>
+                <tr><td>Risk-free rate r</td><td><input type="number" step="any" name="rate" data-label="risk-free rate" value="0.03" /></td><td>annualized decimal</td></tr>
+                <tr><td>Dividend yield q</td><td><input type="number" step="any" name="yield" data-label="dividend yield" value="0" /></td><td>annualized decimal</td></tr>
+                <tr><td>Initial variance v<sub>0</sub></td><td><input type="number" step="any" name="variance" data-label="initial variance" value="0.04" /></td><td>variance per year</td></tr>
+                <tr><td>Long-run variance θ</td><td><input type="number" step="any" name="longRunVariance" data-label="long-run variance" value="0.04" /></td><td>variance per year</td></tr>
+                <tr><td>Mean reversion κ</td><td><input type="number" step="any" name="meanReversion" data-label="mean reversion" value="2" /></td><td>positive</td></tr>
+                <tr><td>Volatility of variance σ<sub>v</sub></td><td><input type="number" step="any" name="volOfVol" data-label="volatility of variance" value="0.5" /></td><td>annualized</td></tr>
+                <tr><td>Asset/variance correlation ρ</td><td><input type="number" step="any" name="correlation" data-label="correlation" value="-0.7" /></td><td>−1 &lt; ρ &lt; 1</td></tr>
+              </table>
+
+              <h2>Prices and volatility comparison</h2>
+              <table border="0">
+                <tr><td>Heston European call</td><td><input name="callPrice" type="text" readonly="readonly" value="" /></td></tr>
+                <tr><td>Heston European put</td><td><input name="putPrice" type="text" readonly="readonly" value="" /></td></tr>
+                <tr><td>Heston call implied volatility</td><td><input name="impliedVolatility" type="text" readonly="readonly" value="" /></td></tr>
+                <tr><td>Flat-volatility Black–Scholes benchmark</td><td><input name="benchmarkVolatility" type="text" readonly="readonly" value="" /></td><td>volatility from expected average variance</td></tr>
+              </table>
+              <p id="heston-error" role="alert" aria-live="assertive" style="color:#cc0000;font-weight:bold;"></p>
+              <p>
+                <button id="heston-reset" type="button">Reset</button>
+                <button id="heston-calculate" type="button">Calculate</button>
+              </p>
+            </form>
+
+            <h2>Heston volatility smile vs. Black–Scholes</h2>
+            <p>The table reprices calls across strikes. Heston implied volatility can vary with moneyness, while the Black–Scholes benchmark uses the same single volatility at every strike. Change \(\rho\) or \(\sigma_v\) to see how the skew and smile respond.</p>
+            <div style="overflow-x:auto;">
+              <table border="1">
+                <thead>
+                  <tr><th>Strike / spot</th><th>Strike</th><th>Heston call</th><th>Heston implied vol.</th><th>Black–Scholes call</th></tr>
+                </thead>
+                <tbody id="heston-smile-results"></tbody>
+              </table>
+            </div>
+
+            <h2>Model</h2>
+            <p>\( dS_t = (r-q)S_t\,dt + \sqrt{v_t}S_t\,dW_t^S \)</p>
+            <p>\( dv_t = \kappa(\theta-v_t)\,dt + \sigma_v\sqrt{v_t}\,dW_t^v,\quad d\langle W^S,W^v\rangle_t = \rho\,dt \)</p>
+            <p>European prices are computed from the Heston characteristic function using Simpson integration. The put price is obtained from put–call parity. The Black–Scholes benchmark volatility is the square root of the expected average variance over the selected maturity.</p>
+            <p><small>This is an educational numerical calculator, not investment advice. The reported smile is a model illustration, not a calibration to market quotes.</small></p>
+          </div>
+        </div>
+        <div class="sidebar">
+          <div class="gadget">
+            <h2 class="star"><span>Search</span></h2>
+            <div class="searchform"></div>
+          </div>
+        </div>
+        <div class="clr"></div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div class="footer_resize">
+        <p class="lf">Copyright &copy; QuantCalc. All Rights Reserved</p>
+        <div class="clr"></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
