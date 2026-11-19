@@ -369,6 +369,19 @@ window.quantcalcSearchIndex = [
     ]
   },
   {
+    "url": "sabr-model-calculator.html",
+    "title": "SABR Model Calculator",
+    "section": "Pricing",
+    "summary": "Compute SABR implied volatility smiles with Hagan's formula, price options with Black-76, and review the model's pros and cons",
+    "keywords": [
+      "SABR model",
+      "Hagan formula",
+      "stochastic volatility",
+      "volatility smile",
+      "Black-76"
+    ]
+  },
+  {
     "url": "heston-option-calculator.html",
     "title": "Heston Stochastic Volatility Option Calculator",
     "section": "Pricing",

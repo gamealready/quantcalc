@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SABR Model Calculator (Hagan Implied Volatility) | QuantCalc</title>
+  <meta name="description" content="Compute SABR implied volatilities with Hagan's approximation, price European options with Black-76, and review the pros and cons of the SABR model." />
+  <link rel="canonical" href="https://www.quantcalc.net/sabr-model-calculator.html" />
+  <link href="style.css" rel="stylesheet" type="text/css" />
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']]
+      }
+    };
+  </script>
+  <script id="MathJax-script" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <script type="text/javascript" src="js/caplet.js"></script>
+  <script type="text/javascript" src="js/calculator-schema.js"></script>
+</head>
+<body>
+  <div class="main">
+    <div class="header">
+      <div class="header_resize">
+        <div class="logo"><div class="site_title"><a href="index.html">Quant<span>Calc</span> <small>Quantitative Finance Calculators for Pricing, Calibration &amp; Risk</small></a></div></div>
+        <div class="menu_nav">
+          <ul>
+            <li><a href="index.html">Home</a></li>
+            <li class="active"><a href="pricing.html">Pricing</a></li>
+            <li><a href="calibration.html">Calibration</a></li>
+            <li><a href="paper.html">Paper</a></li>
+            <li><a href="risk.html">Risk Management</a></li>
+            <li><a href="about.html">About us</a></li>
+            <li><a href="contact.html">Contact us</a></li>
+          </ul>
+        </div>
+        <div class="clr"></div>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="content_resize">
+        <div class="mainbar">
+          <div class="article">
+            <h1>SABR Model Calculator</h1>
+            <p>Compute the SABR implied volatility smile using Hagan et al.'s (2002) lognormal expansion and price European options with Black-76. All calculations run in your browser.</p>
+
+            <form name="sabrForm" id="sabr-form">
+              <h2>Inputs</h2>
+              <table border="0">
+                <tr><td>Forward F</td><td><input type="number" step="any" name="forward" data-label="forward" value="100" /></td></tr>
+                <tr><td>Strike K</td><td><input type="number" step="any" name="strike" data-label="strike" value="100" /></td></tr>
+                <tr><td>Maturity T</td><td><input type="number" step="any" name="maturity" data-label="maturity" value="1" /></td><td>years</td></tr>
+                <tr><td>Risk-free rate r</td><td><input type="number" step="any" name="rate" data-label="risk-free rate" value="0.03" /></td><td>for discounting</td></tr>
+                <tr><td>Initial volatility &alpha;</td><td><input type="number" step="any" name="alpha" data-label="alpha" value="2.5" /></td><td>&gt; 0; scale depends on &beta;</td></tr>
+                <tr><td>Exponent &beta;</td><td><input type="number" step="any" name="beta" data-label="beta" value="0.5" /></td><td>0 &le; &beta; &le; 1</td></tr>
+                <tr><td>Correlation &rho;</td><td><input type="number" step="any" name="rho" data-label="correlation" value="-0.3" /></td><td>&minus;1 &lt; &rho; &lt; 1</td></tr>
+                <tr><td>Vol of vol &nu;</td><td><input type="number" step="any" name="nu" data-label="vol of vol" value="0.4" /></td><td>&ge; 0</td></tr>
+              </table>
+              <h2>Results</h2>
+              <table border="0">
+                <tr><td>SABR implied (Black) volatility</td><td><input name="impliedVol" type="text" readonly="readonly" value="" /></td></tr>
+                <tr><td>Call price (Black-76)</td><td><input name="callPrice" type="text" readonly="readonly" value="" /></td></tr>
+                <tr><td>Put price (Black-76)</td><td><input name="putPrice" type="text" readonly="readonly" value="" /></td></tr>
+              </table>
+              <p id="sabr-error" role="alert" aria-live="assertive" style="color:#cc0000;font-weight:bold;"></p>
+              <p>
+                <button id="sabr-reset" type="button">Reset</button>
+                <button id="sabr-calculate" type="button">Calculate</button>
+              </p>
+            </form>
+
+            <h2>SABR smile</h2>
+            <div style="overflow-x:auto;">
+              <table border="1">
+                <thead><tr><th>Strike / forward</th><th>Strike</th><th>SABR implied vol.</th><th>Call price</th></tr></thead>
+                <tbody id="sabr-smile-results"></tbody>
+              </table>
+            </div>
+
+            <h2>Model</h2>
+            <p>\( dF_t = \alpha_t F_t^{\beta}\,dW_t^1,\quad d\alpha_t = \nu\,\alpha_t\,dW_t^2,\quad d\langle W^1,W^2\rangle_t=\rho\,dt \)</p>
+            <p>\( \sigma_{B}(K) \approx \dfrac{\alpha}{(FK)^{\frac{1-\beta}{2}}\left[1+\frac{(1-\beta)^2}{24}\ln^2\frac FK+\frac{(1-\beta)^4}{1920}\ln^4\frac FK\right]}\cdot\frac{z}{x(z)}\left[1+\left(\frac{(1-\beta)^2\alpha^2}{24(FK)^{1-\beta}}+\frac{\rho\beta\nu\alpha}{4(FK)^{\frac{1-\beta}{2}}}+\frac{2-3\rho^2}{24}\nu^2\right)T\right] \)</p>
+            <p>where \( z=\frac{\nu}{\alpha}(FK)^{\frac{1-\beta}{2}}\ln\frac FK \) and \( x(z)=\ln\frac{\sqrt{1-2\rho z+z^2}+z-\rho}{1-\rho} \). Option prices are Black-76 prices using this volatility.</p>
+
+            <h2>Pros of the SABR model</h2>
+            <ul>
+              <li><b>Closed-form implied volatility:</b> Hagan's formula makes pricing and calibration very fast.</li>
+              <li><b>Interpretable parameters:</b> &alpha; sets the level, &beta; the backbone, &rho; the skew and &nu; the smile curvature.</li>
+              <li><b>Good smile fit:</b> It fits a single-maturity smile well, which is why it is a market standard for swaptions, caps and FX options.</li>
+              <li><b>Stable hedging:</b> Sensitivities to F, &alpha;, &rho; and &nu; are intuitive and widely used by trading desks.</li>
+              <li><b>Flexible dynamics:</b> &beta; spans normal (0) to lognormal (1) behavior and, with shifts, accommodates negative rates.</li>
+            </ul>
+
+            <h2>Cons of the SABR model</h2>
+            <ul>
+              <li><b>Approximation error:</b> Hagan's expansion is inaccurate for long maturities, high &nu;, and far-from-the-money strikes.</li>
+              <li><b>Arbitrage:</b> The implied density can go negative at low strikes, which breaks no-arbitrage conditions and gives negative probabilities.</li>
+              <li><b>Single maturity:</b> Parameters are fitted per expiry; there is no consistent term structure or dynamics across maturities.</li>
+              <li><b>Boundary behavior:</b> With &beta;&lt;1 the forward can hit zero, so absorbing/reflecting boundary treatment matters; shifted SABR is needed for negative rates.</li>
+              <li><b>Calibration issues:</b> &alpha;, &beta; and &rho; are partly redundant, so &beta; is usually fixed in advance.</li>
+              <li><b>No volatility mean reversion:</b> Volatility is a lognormal martingale, unlike Heston, so forward smiles and path-dependent products are poorly modeled.</li>
+            </ul>
+            <p><small>This is an educational calculator, not investment advice, and the smile is a model illustration rather than a market calibration.</small></p>
+          </div>
+        </div>
+        <script>
+        (function () {
+          var D = { forward: 100, strike: 100, maturity: 1, rate: 0.03, alpha: 2.5, beta: 0.5, rho: -0.3, nu: 0.4 };
+          var f = document.forms.sabrForm;
+          function ncdf(x) {
+            var t = 1 / (1 + 0.2316419 * Math.abs(x));
+            var d = 0.3989422804014327 * Math.exp(-x * x / 2);
+            var p = d * t * (0.31938153 + t * (-0.356563782 + t * (1.781477937 + t * (-1.821255978 + t * 1.330274429))));
+            return x >= 0 ? 1 - p : p;
+          }
+          function sabrVol(F, K, T, a, b, r, n) {
+            var om = 1 - b, lg = Math.log(F / K), fk = Math.pow(F * K, om / 2);
+            var corr = 1 + (om * om * a * a / (24 * fk * fk) + r * b * n * a / (4 * fk) + (2 - 3 * r * r) * n * n / 24) * T;
+            var zx = 1;
+            if (n > 0 && Math.abs(lg) > 1e-12) {
+              var z = n / a * fk * lg;
+              zx = z / Math.log((Math.sqrt(1 - 2 * r * z + z * z) + z - r) / (1 - r));
+            }
+            var den = fk * (1 + om * om * lg * lg / 24 + Math.pow(om, 4) * Math.pow(lg, 4) / 1920);
+            return a / den * zx * corr;
+          }
+          function black(F, K, T, r, v, call) {
+            var df = Math.exp(-r * T), s = v * Math.sqrt(T);
+            var d1 = (Math.log(F / K) + s * s / 2) / s, d2 = d1 - s;
+            return call ? df * (F * ncdf(d1) - K * ncdf(d2)) : df * (K * ncdf(-d2) - F * ncdf(-d1));
+          }
+          function read() {
+            var p = {};
+            for (var k in D) {
+              p[k] = parseFloat(f.elements[k].value);
+              if (!isFinite(p[k])) throw new Error('Please enter a valid ' + f.elements[k].getAttribute('data-label') + '.');
+            }
+            if (p.forward <= 0 || p.strike <= 0 || p.maturity <= 0 || p.alpha <= 0) throw new Error('Forward, strike, maturity and alpha must be positive.');
+            if (p.beta < 0 || p.beta > 1) throw new Error('Beta must be between 0 and 1.');
+            if (p.rho <= -1 || p.rho >= 1) throw new Error('Correlation must be strictly between -1 and 1.');
+            if (p.nu < 0) throw new Error('Vol of vol must be non-negative.');
+            return p;
+          }
+          function calc() {
+            var err = document.getElementById('sabr-error'), body = document.getElementById('sabr-smile-results');
+            err.textContent = ''; body.innerHTML = '';
+            try {
+              var p = read();
+              var v = sabrVol(p.forward, p.strike, p.maturity, p.alpha, p.beta, p.rho, p.nu);
+              if (!(v > 0)) throw new Error('SABR volatility is not positive for these inputs.');
+              f.impliedVol.value = (v * 100).toFixed(4) + '%';
+              f.callPrice.value = black(p.forward, p.strike, p.maturity, p.rate, v, true).toFixed(6);
+              f.putPrice.value = black(p.forward, p.strike, p.maturity, p.rate, v, false).toFixed(6);
+              [0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3].forEach(function (m) {
+                var K = m * p.forward, sv = sabrVol(p.forward, K, p.maturity, p.alpha, p.beta, p.rho, p.nu);
+                var tr = document.createElement('tr');
+                [m.toFixed(2), K.toFixed(2), (sv * 100).toFixed(4) + '%', black(p.forward, K, p.maturity, p.rate, sv, true).toFixed(6)].forEach(function (t) {
+                  var td = document.createElement('td'); td.textContent = t; tr.appendChild(td);
+                });
+                body.appendChild(tr);
+              });
+            } catch (e) {
+              err.textContent = e.message;
+              f.impliedVol.value = f.callPrice.value = f.putPrice.value = '';
+            }
+          }
+          document.getElementById('sabr-calculate').addEventListener('click', calc);
+          document.getElementById('sabr-reset').addEventListener('click', function () {
+            for (var k in D) f.elements[k].value = D[k];
+            calc();
+          });
+          calc();
+        })();
+        </script>
+        <div class="sidebar">
+          <div class="gadget">
+            <h2 class="star"><span>Search</span></h2>
+            <div class="searchform"></div>
+          </div>
+        </div>
+        <div class="clr"></div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div class="footer_resize">
+        <p class="lf">Copyright &copy; QuantCalc. All Rights Reserved</p>
+        <div class="clr"></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
