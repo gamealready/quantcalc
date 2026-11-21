@@ -27,6 +27,7 @@ body {
 
 .header {
     background: #0b1220;
+    min-width: 1080px;
     padding: 12px 0;
     border-bottom: 1px solid #111a33;
 }
