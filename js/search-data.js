@@ -382,6 +382,19 @@ window.quantcalcSearchIndex = [
     ]
   },
   {
+    "url": "lsm-american-option-calculator.html",
+    "title": "American Option Monte Carlo Calculator (Longstaff-Schwartz)",
+    "section": "Pricing",
+    "summary": "Price American calls and puts with least-squares Monte Carlo and compare with the Black-Scholes European price",
+    "keywords": [
+      "American option",
+      "Monte Carlo",
+      "Longstaff-Schwartz",
+      "LSM",
+      "early exercise"
+    ]
+  },
+  {
     "url": "heston-option-calculator.html",
     "title": "Heston Stochastic Volatility Option Calculator",
     "section": "Pricing",
