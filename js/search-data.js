@@ -408,6 +408,19 @@ window.quantcalcSearchIndex = [
     ]
   },
   {
+    "url": "svi-volatility-calculator.html",
+    "title": "SVI Volatility Smile Calculator",
+    "section": "Pricing",
+    "summary": "Compute SVI implied volatility smiles and option prices with interactive plots, formulas, pros and cons, and FAQ",
+    "keywords": [
+      "SVI",
+      "stochastic volatility inspired",
+      "volatility smile",
+      "implied volatility surface",
+      "butterfly arbitrage"
+    ]
+  },
+  {
     "url": "local-volatility-calculator.html",
     "title": "Local Volatility Calculator",
     "section": "Pricing",
