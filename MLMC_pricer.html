@@ -11,7 +11,8 @@
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
-<script type="text/javascript" src="js/MLMC.js"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<script type="text/javascript" src="js/MLMC_autocall.js"></script>
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1337506067911632"
   crossorigin="anonymous"></script>
 <title>Autocallable Structured Note Calculator | Multi-Level Monte Carlo (MLMC) - QuantCalc</title>
@@ -79,20 +80,19 @@ function Calculate()
     const p_barrier = parseFloat(document.isForm.p_barrier.value);
     const N_base = parseFloat(document.isForm.N_base.value);
 
-    resultValue = runPricer(S, K, T, s, r, q, L_max, p_barrier, N_base);
+    resultValue = runAutocallPricer(S, K, T, s, r, q, L_max, p_barrier, N_base);
     document.isForm.c.value=resultValue;
 
 };
 
 function Reset()
 {
-    document.isForm.S.value="80";
+    document.isForm.S.value="100";
     document.isForm.K.value="100";
-    document.isForm.T.value="0.25";
-    document.isForm.r.value="0.08";
+    document.isForm.T.value="1";
+    document.isForm.r.value="0.05";
     document.isForm.s.value="0.2";
     document.isForm.q.value="0.12";
-    document.isForm.r.value="0.08";
     document.isForm.L_max.value="3";
     document.isForm.p_barrier.value="100";
     document.isForm.N_base.value="10000";
@@ -114,7 +114,7 @@ function Reset()
     </li>
 
     <li>
-      <strong>The Protection Barrier (p):</strong> This is the "safety net." If the note is never called and reaches maturity (T), the investor is still protected as long as the asset price hasn't fallen below the barrier (e.g., 70% of the initial price).
+      <strong>The Protection Barrier (p):</strong> This is the "safety net." If the note is never called and reaches maturity (T), the investor is still protected as long as the asset price hasn't fallen below the barrier on any time step; otherwise the investor receives the final asset price.
     </li>
   </ul>
 <table border=0>
@@ -141,6 +141,37 @@ function Reset()
 
 <font size=-1>The calculation is based on MLMC.</font>
 
+<div class="calc-guide">
+<h2>How the Autocallable Note Pricer Works</h2>
+<p>An autocallable structured note, sold in variants known as snowball and phoenix notes, pays a coupon and redeems early if an underlying asset is at or above the autocall level on an observation date. If it is never called, the investor's principal is protected at maturity as long as the asset has not fallen through the protection barrier. Banks issue these notes for yield-seeking investors, and valuing them is a typical use of Monte Carlo because the payoff depends on the whole path and on several observation dates. This <b>autocallable note pricer</b> estimates the note value with multilevel Monte Carlo (MLMC).</p>
+
+<h2>Pricing Methodology &amp; Mathematical Formula</h2>
+<p>The underlying is simulated under the risk-neutral measure with geometric Brownian motion, \(dS_t = rS_t\,dt+\sigma S_t\,dW_t\). On observation dates \(t_1<\dots<t_n=T\) the note (notional <i>N</i> equal to the initial price) terminates at the first \(t_i\) with \(S_{t_i}\ge K\), and the note value is the discounted expected cash flow:</p>
+<div class="math">\[ V=\mathbb{E}\Big[e^{-r\tau}\,N\,(1+q\,\tau)\Big],\qquad \tau=\min\{t_i: S_{t_i}\ge K\} \]</div>
+<p>where observations are quarterly. If no call occurs, the note pays <i>N</i> at <i>T</i> when the asset stayed at or above the protection barrier <i>p</i> on every time step, and otherwise pays the final price \\(S_T\\). MLMC reduces the cost by combining a cheap coarse-grid estimator with correction terms from finer grids:</p>
+<div class="math">\[ \mathbb{E}[P_L]=\mathbb{E}[P_0]+\sum_{\ell=1}^{L}\mathbb{E}[P_\ell-P_{\ell-1}] \]</div>
+<table class="calc-guide-table">
+<tr><th>Input</th><th>Meaning</th></tr>
+<tr><td>S</td><td>Initial underlying price</td></tr>
+<tr><td>K</td><td>Autocall level compared with the spot on observation dates</td></tr>
+<tr><td>T</td><td>Time to maturity in years</td></tr>
+<tr><td>r, &sigma;</td><td>Risk-free rate and volatility, annualised</td></tr>
+<tr><td>q</td><td>Coupon rate, accrued pro rata to the call date</td></tr>
+<tr><td>p</td><td>Protection barrier level</td></tr>
+<tr><td>Max Level, Base Samples</td><td>Finest MLMC refinement level and level-0 path count</td></tr>
+</table>
+
+<h2>Worked Example (Using Default Inputs)</h2>
+<p>The defaults are S = 100, autocall level K = 100, T = 1 year, r = 5%, coupon q = 12%, volatility 20%, protection barrier 100, Max Level 3 and 10,000 base samples. To see how the cash flows map, take one simulated path with a notional of 100 in which the spot is above 100 at the first quarterly observation (\(\tau = 0.25\)). The note redeems with a pro-rated coupon of \(100\times(1+0.12\times0.25)=103\), and its discounted value is \(103\,e^{-0.05\times0.25}\approx 101.72\). A path that is never called is discounted from \(T=1\) instead. The calculator averages many such discounted outcomes across paths and levels; for these defaults it returns about 97.1, and repeated runs vary by roughly 0.1.</p>
+
+<h2>Frequently Asked Questions</h2>
+<h3>What is the difference between a snowball and a phoenix autocallable?</h3>
+<p>A phoenix pays a coupon on each observation date where the asset is above a coupon barrier, even if the note is not called. A snowball accrues coupons that are paid only on autocall or maturity. The calculator's coupon q follows the accrual style described above.</p>
+<h3>Why are autocallables valued by Monte Carlo rather than a closed form?</h3>
+<p>Early redemption on multiple dates plus a barrier gives a path-dependent payoff with no closed form. Monte Carlo handles this flexibly, and MLMC lowers the cost of reaching a given accuracy.</p>
+<h3>How does volatility affect the note value?</h3>
+<p>Higher volatility raises the chance of breaching the protection barrier, which lowers the value to the investor, and also changes how likely an early call is. Test different inputs to see the sensitivity.</p>
+</div>
           <p>Tagged: <a href="paper/Multilevel_Monte_Carlo__MLMC_.pdf">Multilevel Monte Carlo (MLMC)</a>
           <p>  <span>&nbsp;&bull;&nbsp;</span> Jan  1, 2025  <span>&nbsp;&bull;&nbsp;</span>  </p>
         </div>

@@ -38,6 +38,7 @@ $(document).ready(function() {
 </script>
 
 
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 <script type="text/javascript" src="js/calculator-schema.js"></script>
 </head>
 <body>
@@ -150,6 +151,39 @@ $(document).ready(function() {
 
 <font size=-1>The we use Monte Carlo method to price discrete barrier option.</font>
 
+<div class="calc-guide">
+<h2>How the Discrete Barrier Option Calculator Works</h2>
+<p>A barrier option is a vanilla call or put that is activated (knock-in) or cancelled (knock-out) when the underlying crosses a barrier level <i>H</i>. In practice, especially in FX, the barrier is checked only at fixed dates (semi-annually, quarterly or monthly) rather than continuously. This <b>discrete barrier option calculator</b> simulates asset paths and tests the barrier only on those monitoring dates. A <b>down-and-out call</b>, for example, is a call that is cancelled, optionally in exchange for a rebate, if the spot is at or below <i>H</i> on a monitoring date.</p>
+<p>Discrete monitoring makes the option worth more than its continuously monitored twin: a knock-out survives paths that dip below the barrier between observations.</p>
+
+<h2>Pricing Methodology &amp; Mathematical Formula</h2>
+<p>The underlying follows geometric Brownian motion under the risk-neutral measure, with domestic rate <i>r</i> and foreign rate <i>r<sub>f</sub></i>:</p>
+<div class="math">\[ dS_t = (r - r_f)\,S_t\,dt + \sigma S_t\,dW_t,\qquad S_{t+\Delta t}=S_t\exp\!\Big[\big(r-r_f-\tfrac12\sigma^2\big)\Delta t+\sigma\sqrt{\Delta t}\,Z\Big] \]</div>
+<p>Each of the <i>NS</i> paths is built from <i>Ni</i> time steps of size \(\Delta t = T/N_i\). For a knock-out call the discounted payoff on a path is</p>
+<div class="math">\[ \text{payoff}=\begin{cases} e^{-r\tau}K, & \text{barrier breached at monitoring time } \tau\ (\text{or } e^{-rT}K \text{ if the rebate is paid at expiry})\\ e^{-rT}\max(S_T-X,0), & \text{otherwise,}\end{cases} \]</div>
+<p>and the price is the sample mean over all paths, \(\hat V = \tfrac1{N_S}\sum_i \text{payoff}_i\). Knock-in options pay the vanilla payoff only when the barrier was breached, and puts replace the payoff with \(\max(X-S_T,0)\).</p>
+<table class="calc-guide-table">
+<tr><th>Input</th><th>Meaning</th></tr>
+<tr><td>S, X, T</td><td>Spot price, strike and time to maturity in years</td></tr>
+<tr><td>r, r<sub>f</sub></td><td>Domestic and foreign (or dividend) rates, annualised</td></tr>
+<tr><td>&sigma;</td><td>Annualised volatility</td></tr>
+<tr><td>H, K</td><td>Barrier level and rebate amount</td></tr>
+<tr><td>NS, Ni</td><td>Number of simulated paths and time steps per path</td></tr>
+<tr><td>Monitoring</td><td>Semi-annual, quarterly or monthly dates; "all day" or "end of day" checks</td></tr>
+</table>
+<p>The output is the option price. Because it is a Monte Carlo estimate, results vary slightly between runs; the error shrinks like \(1/\sqrt{N_S}\), so raise <i>NS</i> for tighter prices.</p>
+
+<h2>Worked Example (Using Default Inputs)</h2>
+<p>The default inputs are spot 95, strike 100, maturity 1 year, <i>r</i> = 10%, <i>r<sub>f</sub></i> = 0%, &sigma; = 25%, barrier 90, rebate 20 paid when the barrier is hit, a knock-out call, semi-annual monitoring, 1,000 paths and 100 steps. Because 95 &gt; 90 this is a down-and-out call. For reference, the same call without a barrier has Black-Scholes value \(d_1 = 0.320\), \(d_2 = 0.070\) and price of about 11.66. With the barrier, each path either earns the rebate (about 20 discounted to the hit date) or the vanilla payoff at expiry. Repeated runs of these defaults return roughly 19, which is higher than the vanilla value because the large rebate of 20 dominates; setting the rebate to 0 reduces the price below the vanilla 11.66, as expected for a knock-out.</p>
+
+<h2>Frequently Asked Questions</h2>
+<h3>What is the difference between discrete and continuous barrier options?</h3>
+<p>A continuous barrier is monitored at every instant, so the closed-form formulas apply. A discrete barrier is checked only on set dates, so the knock-out probability is lower. A common approximation shifts the barrier by \(e^{\pm0.5826\,\sigma\sqrt{\Delta t}}\) (the Broadie-Glasserman-Kou correction), but simulation handles any schedule directly.</p>
+<h3>When should you use Monte Carlo instead of a trinomial tree for discrete barriers?</h3>
+<p>Trees and PDE solvers are fast and smooth for a single asset with a few monitoring dates, and give no sampling noise; see the <a href="DiscreteBarrierTriTree.html">discrete barrier trinomial tree calculator</a>. Monte Carlo is preferable with many monitoring dates, path-dependent rebates or several risk factors, at the cost of statistical error.</p>
+<h3>Why does a very large rebate raise the price above the vanilla option?</h3>
+<p>The rebate is a cash flow received on knock-out. When it exceeds the option's likely payoff, being knocked out is more valuable than surviving.</p>
+</div>
           <p>Keywords: <a href="contact.html">discrete barrier option calculator</a>, <a href="contact.html">FX</a>, <a href="contact.html">Foreign exchange derivatives</a>
           <p>  <span>&nbsp;&bull;&nbsp;</span> May  26, 2013  <span>&nbsp;&bull;&nbsp;</span>  </p>
         </div>

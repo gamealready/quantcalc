@@ -17,6 +17,7 @@
 <link href="style.css" rel="stylesheet" type="text/css" />
 <!-- CuFon: Enables smooth pretty custom font rendering. 100% SEO friendly. To disable, remove this section -->
 
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 <script type="text/javascript" src="js/caplet.js"></script>
 <!-- CuFon ends -->
 </head>
@@ -60,6 +61,28 @@
           <p> <a href="DGA.html">Geometric Asian Option</a>  </p>
           <p> <a href="CDS.html">Credit Default Swap</a>  </p>      
 
+<div class="calc-guide">
+<h2>How the Analytic Solution Calculators Work</h2>
+<p>Closed-form pricing gives an option or exposure value from a formula with no simulation, so results are instant and exact up to floating-point error. This page indexes QuantCalc's closed-form tools, from vanilla options and American approximations to caplets, bond options and swaptions, and the exposure calculators for <b>potential future exposure (PFE)</b> and expected exposure (EE) used in counterparty credit risk.</p>
+
+<h2>Pricing Methodology &amp; Mathematical Formula</h2>
+<p>The foundation is the Black-Scholes formula for a European call on a non-dividend asset:</p>
+<div class="math">\[ C=S\,N(d_1)-Xe^{-rT}N(d_2),\quad d_{1,2}=\frac{\ln(S/X)+(r\pm\tfrac12\sigma^2)T}{\sigma\sqrt T} \]</div>
+<p>Black-76 caplets replace the spot with a forward rate, and Hull-White bond options use a Gaussian short-rate model whose bond price is lognormal-like. Exotic formulas exist for some payoffs; the geometric Asian option is closed-form because a geometric average of lognormal prices is lognormal. For exposure, a portfolio value \(V_t\) that is normal with mean \(\mu_t\) and standard deviation \(s_t\) has</p>
+<div class="math">\[ \mathrm{EE}_t=\mathbb{E}[\max(V_t,0)],\qquad \mathrm{PFE}_t^{\alpha}=\mu_t+s_t\,N^{-1}(\alpha) \]</div>
+<p>where \(\alpha\) is the confidence level, commonly 95% or 97.5%. Common inputs are spot or forward, strike, maturity, rate, volatility and, for exposure, the confidence level.</p>
+
+<h2>Worked Example</h2>
+<p>For a one-year call with S = 95, X = 100, r = 10% and &sigma; = 25%: \(d_1=0.320\), \(d_2=0.070\), \(N(d_1)=0.6255\), \(N(d_2)=0.5278\), so \(C=95(0.6255)-100e^{-0.1}(0.5278)\approx 11.66\). For a normal exposure with \(\mu_t=0\) and \(s_t=10\), the 95% PFE is \(10\times1.645=16.45\). Open the <a href="black-scholes-calculator.html">Black-Scholes calculator</a> or the <a href="EEandPFENormal.html">EE and PFE calculator</a> to check these figures.</p>
+
+<h2>Frequently Asked Questions</h2>
+<h3>When can I use a closed-form formula instead of Monte Carlo?</h3>
+<p>Use closed forms when the payoff and model admit one, such as European options in Black-Scholes. Switch to trees, PDEs or Monte Carlo for early exercise, discrete barriers or path-dependent features without a formula.</p>
+<h3>What is potential future exposure?</h3>
+<p>PFE is a high percentile of the future positive exposure to a counterparty. It is used to set credit limits and capital, while EE is the average exposure.</p>
+<h3>How accurate are the American option approximations?</h3>
+<p>The Barone-Adesi-Whaley and Bjerksund-Stensland formulas are analytic approximations. They are fast and usually close to numerical benchmarks, but compare them with a tree or PDE for deep in-the-money or long-dated cases.</p>
+</div>
         </div>
       </div>
       <div class="sidebar">

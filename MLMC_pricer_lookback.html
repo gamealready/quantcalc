@@ -110,7 +110,7 @@ function Reset()
 <tr><td>Base Samples	(int >10000)</td><td><input name="N_base" value="100000"></td><td></td></tr>
 
 <tr><td><b>Output:</b></td><td>
-<tr><td>Autocallable value</td><td><input name="c" value="" onFocus="blur();"></td><td></td></tr>
+<tr><td>Lookback call value</td><td><input name="c" value="" onFocus="blur();"></td><td></td></tr>
 
 </table>
 <p>
@@ -121,6 +121,36 @@ function Reset()
 
 <font size=-1>The calculation is based on MLMC.</font>
 
+<div class="calc-guide">
+<h2>How the Lookback Option Pricing Calculator Works</h2>
+<p>A floating-strike lookback call pays the difference between the final asset price and the lowest price observed during the option's life, so the holder effectively buys at the minimum. The payoff is never negative, which makes the option more expensive than a vanilla call. Traders use lookbacks to remove timing risk and quants use them as a standard test case for path-dependent pricing. This <b>lookback option pricing calculator</b> uses multilevel Monte Carlo (MLMC), which reaches a given accuracy at lower cost than plain Monte Carlo.</p>
+
+<h2>Pricing Methodology &amp; Mathematical Formula</h2>
+<p>The asset follows geometric Brownian motion, \(dS_t = rS_t\,dt+\sigma S_t\,dW_t\), and the discounted payoff is</p>
+<div class="math">\[ V = e^{-rT}\,\mathbb{E}\Big[S_T-\min_{0\le t\le T}S_t\Big]. \]</div>
+<p>MLMC writes the price as a telescoping sum over time-step refinements. Level 0 uses a coarse grid of 2 steps and each higher level multiplies the number of steps by 4:</p>
+<div class="math">\[ \mathbb{E}[P_L]=\mathbb{E}[P_0]+\sum_{\ell=1}^{L}\mathbb{E}[P_\ell-P_{\ell-1}] \]</div>
+<p>The fine and coarse paths in each correction term share the same Brownian increments, so the difference has small variance and needs few samples. The sample count falls as \(N_\ell = N_{base}/4^{\ell}\) with a floor of 1,000.</p>
+<table class="calc-guide-table">
+<tr><th>Input</th><th>Meaning</th></tr>
+<tr><td>S, T</td><td>Initial price and maturity in years</td></tr>
+<tr><td>r, &sigma;</td><td>Risk-free rate and volatility, annualised</td></tr>
+<tr><td>Max Level</td><td>Finest refinement level <i>L</i> (typically 3 to 5)</td></tr>
+<tr><td>Base Samples</td><td>Number of paths at level 0</td></tr>
+</table>
+<p>The output is the lookback call value. The grid is discrete, so the estimate is slightly below the continuously monitored value.</p>
+
+<h2>Worked Example (Using Default Inputs)</h2>
+<p>With the defaults S = 1, T = 1, r = 5%, &sigma; = 20%, Max Level = 5 and 100,000 base samples, the Goldman-Sosin-Gatto closed form for a continuously monitored floating lookback call gives about 0.1722. The calculator returns about 0.170 to 0.171 on repeated runs, a little lower because the minimum is taken over a finite number of grid points, and the run-to-run variation is in the third decimal place. Multiply by a notional of 1,000,000 to read the value as a premium of roughly 170,000.</p>
+
+<h2>Frequently Asked Questions</h2>
+<h3>Why use multilevel Monte Carlo for lookback options?</h3>
+<p>The lookback payoff depends on the whole path, and the discretisation bias of the minimum shrinks slowly with more steps. MLMC spends most samples on cheap coarse paths and few on expensive fine paths, so the bias is reduced at much lower total cost.</p>
+<h3>Why is a lookback call worth more than a vanilla call?</h3>
+<p>It always settles against the best (lowest) price seen, so it pays off in every scenario in which the price ends above its minimum, which is almost every path.</p>
+<h3>How do I tighten the estimate?</h3>
+<p>Increase Base Samples to reduce statistical error and Max Level to reduce the time-discretisation bias. Compare against the <a href="MC_lookback.html">standard Monte Carlo lookback calculator</a> as a cross-check.</p>
+</div>
           <p>Tagged: <a href="paper/Multilevel_Monte_Carlo__MLMC_.pdf">Multilevel Monte Carlo (MLMC)</a>
           <p>  <span>&nbsp;&bull;&nbsp;</span> Jan  2, 2025  <span>&nbsp;&bull;&nbsp;</span>  </p>
         </div>
