@@ -117,3 +117,11 @@ body {
     margin-bottom: 12px;
     font-weight: 700;
 }
+
+/* Educational content below calculators */
+.calc-guide { margin-top: 24px; clear: both; }
+.calc-guide h2 { margin-top: 22px; }
+.calc-guide h3 { margin: 16px 0 6px; font-size: 16px; }
+.calc-guide mjx-container[display="true"] { max-width: 100%; overflow-x: auto; overflow-y: hidden; }
+.calc-guide table.calc-guide-table { border-collapse: collapse; max-width: 100%; }
+.calc-guide table.calc-guide-table td, .calc-guide table.calc-guide-table th { border: 1px solid #ccd; padding: 3px 8px; text-align: left; }
