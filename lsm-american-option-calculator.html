@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>American Option Monte Carlo Calculator (Longstaff-Schwartz) | QuantCalc</title>
+  <meta name="description" content="Price American calls and puts by Monte Carlo simulation with the Longstaff-Schwartz least-squares method, with standard error and a Black-Scholes European comparison." />
+  <link rel="canonical" href="https://www.quantcalc.net/lsm-american-option-calculator.html" />
+  <link href="style.css" rel="stylesheet" type="text/css" />
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']]
+      }
+    };
+  </script>
+  <script id="MathJax-script" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <script type="text/javascript" src="js/caplet.js"></script>
+  <script type="text/javascript" src="js/lsm-american.js"></script>
+  <script type="text/javascript" src="js/calculator-schema.js"></script>
+</head>
+<body>
+  <div class="main">
+    <div class="header">
+      <div class="header_resize">
+        <div class="logo"><div class="site_title"><a href="index.html">Quant<span>Calc</span> <small>Quantitative Finance Calculators for Pricing, Calibration &amp; Risk</small></a></div></div>
+        <div class="menu_nav">
+          <ul>
+            <li><a href="index.html">Home</a></li>
+            <li class="active"><a href="pricing.html">Pricing</a></li>
+            <li><a href="calibration.html">Calibration</a></li>
+            <li><a href="paper.html">Paper</a></li>
+            <li><a href="risk.html">Risk Management</a></li>
+            <li><a href="about.html">About us</a></li>
+            <li><a href="contact.html">Contact us</a></li>
+          </ul>
+        </div>
+        <div class="clr"></div>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="content_resize">
+        <div class="mainbar">
+          <div class="article">
+            <h1>American Option Monte Carlo Calculator (Longstaff–Schwartz)</h1>
+            <p>Price American calls and puts by simulating geometric Brownian motion paths and estimating the optimal exercise rule with the Longstaff–Schwartz least-squares Monte Carlo (LSM) algorithm. All calculations run in your browser.</p>
+
+            <form name="lsmForm" id="lsm-form">
+              <h2>Inputs</h2>
+              <table border="0">
+                <tr><td>Option type</td><td><select name="optionType"><option value="put">American put</option><option value="call">American call</option></select></td></tr>
+                <tr><td>Spot price S<sub>0</sub></td><td><input type="number" step="any" name="spot" data-label="spot price" value="100" /></td><td></td></tr>
+                <tr><td>Strike K</td><td><input type="number" step="any" name="strike" data-label="strike" value="100" /></td><td></td></tr>
+                <tr><td>Maturity T</td><td><input type="number" step="any" name="maturity" data-label="maturity" value="1" /></td><td>years</td></tr>
+                <tr><td>Risk-free rate r</td><td><input type="number" step="any" name="rate" data-label="risk-free rate" value="0.05" /></td><td>annualized decimal</td></tr>
+                <tr><td>Dividend yield q</td><td><input type="number" step="any" name="yield" data-label="dividend yield" value="0" /></td><td>annualized decimal</td></tr>
+                <tr><td>Volatility σ</td><td><input type="number" step="any" name="volatility" data-label="volatility" value="0.2" /></td><td>annualized decimal</td></tr>
+                <tr><td>Simulated paths</td><td><input type="number" step="any" name="paths" data-label="paths" value="20000" /></td><td>100 – 200,000</td></tr>
+                <tr><td>Exercise dates</td><td><input type="number" step="any" name="steps" data-label="exercise steps" value="50" /></td><td>time steps, 2 – 500</td></tr>
+                <tr><td>Regression polynomial degree</td><td><input type="number" step="any" name="degree" data-label="polynomial degree" value="3" /></td><td>1 – 6</td></tr>
+                <tr><td>Random seed</td><td><input type="number" step="any" name="seed" data-label="seed" value="12345" /></td><td>fixed for reproducible results</td></tr>
+              </table>
+
+              <h2>Results</h2>
+              <table border="0">
+                <tr><td>American option price (LSM)</td><td><input name="price" type="text" readonly="readonly" value="" /></td><td></td></tr>
+                <tr><td>Monte Carlo standard error</td><td><input name="stderr" type="text" readonly="readonly" value="" /></td><td></td></tr>
+                <tr><td>95% confidence interval</td><td><input name="ci" type="text" readonly="readonly" value="" /></td><td></td></tr>
+                <tr><td>Black–Scholes European price</td><td><input name="european" type="text" readonly="readonly" value="" /></td><td>same inputs</td></tr>
+                <tr><td>Early exercise premium</td><td><input name="premium" type="text" readonly="readonly" value="" /></td><td>LSM − European</td></tr>
+                <tr><td>Immediate exercise value</td><td><input name="intrinsic" type="text" readonly="readonly" value="" /></td><td></td></tr>
+                <tr><td>Paths exercised early</td><td><input name="early" type="text" readonly="readonly" value="" /></td><td></td></tr>
+              </table>
+              <p id="lsm-error" role="alert" aria-live="assertive" style="color:#cc0000;font-weight:bold;"></p>
+              <p>
+                <button id="lsm-reset" type="button">Reset</button>
+                <button id="lsm-calculate" type="button">Calculate</button>
+              </p>
+            </form>
+
+            <h2>Longstaff–Schwartz method</h2>
+            <p>Under the risk-neutral measure, \( S_{t+\Delta t}=S_t\exp\big((r-q-\tfrac12\sigma^2)\Delta t+\sigma\sqrt{\Delta t}\,Z\big) \), simulated with antithetic variates. Starting from maturity, the algorithm steps backward through the exercise dates. At each date, for in-the-money paths only, the discounted future cash flow is regressed on a polynomial in \(S_t/K\) to estimate the continuation value \(C(S_t)\). A path is exercised when the immediate payoff exceeds \(C(S_t)\); otherwise its later cash flow is kept. The price is the average discounted cash flow, floored at the payoff from exercising immediately.</p>
+            <p>Because the exercise rule is estimated, LSM gives a slightly low-biased price for a given set of paths; more exercise dates, a suitable polynomial degree and more paths improve accuracy. Discrete exercise dates approximate continuous American exercise from below. An American call on a non-dividend-paying stock is never exercised early, so its premium over the European price should be near zero.</p>
+            <p><small>Reference: Longstaff, F. and Schwartz, E. (2001), "Valuing American Options by Simulation: A Simple Least-Squares Approach", Review of Financial Studies 14(1). This is an educational calculator, not investment advice.</small></p>
+          </div>
+        </div>
+        <div class="sidebar">
+          <div class="gadget">
+            <h2 class="star"><span>Search</span></h2>
+            <div class="searchform"></div>
+          </div>
+        </div>
+        <div class="clr"></div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div class="footer_resize">
+        <p class="lf">Copyright &copy; QuantCalc. All Rights Reserved</p>
+        <div class="clr"></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
