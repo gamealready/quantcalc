@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SVI Volatility Smile Calculator | Raw SVI Parameters &amp; Option Prices - QuantCalc</title>
+  <meta name="description" content="Enter raw SVI parameters to compute the implied volatility smile and Black-76 call and put prices, with interactive plots, no-arbitrage checks, formulas, pros and cons, and FAQ." />
+  <link rel="canonical" href="https://www.quantcalc.net/svi-volatility-calculator.html" />
+  <link href="style.css" rel="stylesheet" type="text/css" />
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']]
+      }
+    };
+  </script>
+  <script id="MathJax-script" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <script type="text/javascript" src="js/caplet.js"></script>
+  <script type="text/javascript" src="js/calculator-schema.js"></script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {"@type": "Question", "name": "What does SVI stand for?", "acceptedAnswer": {"@type": "Answer", "text": "SVI means Stochastic Volatility Inspired, a parametrization of the implied total variance smile introduced by Jim Gatheral. It is a curve-fitting form, not a stochastic process."}},
+      {"@type": "Question", "name": "What does each raw SVI parameter do?", "acceptedAnswer": {"@type": "Answer", "text": "a shifts the smile vertically, b controls the slope of the wings and overall angle, rho rotates the smile and sets the skew, m shifts it horizontally, and sigma smooths the vertex at the minimum."}},
+      {"@type": "Question", "name": "Why is SVI quoted in total variance?", "acceptedAnswer": {"@type": "Answer", "text": "Total variance w = sigma_imp^2 T makes the wings linear in log-moneyness, matching Lee's moment formula, and makes calendar-spread arbitrage easy to express as monotonicity of w in maturity."}},
+      {"@type": "Question", "name": "How do I know if my parameters allow arbitrage?", "acceptedAnswer": {"@type": "Answer", "text": "The calculator checks that total variance is positive and that Gatheral's butterfly density function g(k) is non-negative across the strike grid. Wing slope limits b(1+|rho|) <= 4/T also prevent moment violations."}},
+      {"@type": "Question", "name": "Are the option prices model prices?", "acceptedAnswer": {"@type": "Answer", "text": "They are Black-76 prices computed with the SVI implied volatility at each strike, so they reproduce the quoted smile exactly."}}
+    ]
+  }
+  </script>
+  <style type="text/css">
+    .svi-grid { display: flex; flex-wrap: wrap; gap: 16px; }
+    .svi-grid > div { flex: 1 1 280px; min-width: 260px; }
+    .svi-slider-row { display: flex; align-items: center; gap: 8px; margin: 4px 0; }
+    .svi-slider-row label { width: 90px; font-weight: bold; }
+    .svi-slider-row input[type=range] { flex: 1; }
+    .svi-slider-row input[type=number] { width: 80px; }
+    .svi-plot { width: 100%; max-width: 640px; height: 340px; border: 1px solid #d9d9d9; background: #fff; display: block; }
+    .svi-adv { border: 1px solid #d9d9d9; padding: 6px 12px; margin: 10px 0; background: #fafafa; }
+    .svi-adv summary { cursor: pointer; font-weight: bold; }
+    .svi-adv table td { padding: 2px 6px; }
+    .svi-warn { color: #cc0000; font-weight: bold; }
+    .svi-ok { color: #1a7f37; font-weight: bold; }
+    .faq-item details { border: 1px solid #d9d9d9; margin: 6px 0; padding: 8px 12px; background: #f7f7f7; }
+    .faq-item summary { cursor: pointer; font-weight: bold; }
+    .svi-proscons { display: flex; flex-wrap: wrap; gap: 16px; }
+    .svi-proscons > div { flex: 1 1 280px; }
+  </style>
+</head>
+<body>
+  <div class="main">
+    <div class="header">
+      <div class="header_resize">
+        <div class="logo"><div class="site_title"><a href="index.html">Quant<span>Calc</span> <small>Quantitative Finance Calculators for Pricing, Calibration &amp; Risk</small></a></div></div>
+        <div class="menu_nav">
+          <ul>
+            <li><a href="index.html">Home</a></li>
+            <li class="active"><a href="pricing.html">Pricing</a></li>
+            <li><a href="calibration.html">Calibration</a></li>
+            <li><a href="paper.html">Paper</a></li>
+            <li><a href="risk.html">Risk Management</a></li>
+            <li><a href="about.html">About us</a></li>
+            <li><a href="contact.html">Contact us</a></li>
+          </ul>
+        </div>
+        <div class="clr"></div>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="content_resize">
+        <div class="mainbar">
+          <div class="article">
+            <h1>SVI Volatility Smile Calculator</h1>
+            <p>Enter the raw SVI parameters of a single-maturity slice to get implied volatilities and European option prices across strikes. Drag the sliders to see how each parameter reshapes the smile. All calculations run in your browser.</p>
+
+            <form name="sviForm" id="svi-form" onsubmit="return false;">
+              <h2>SVI parameters</h2>
+              <div class="svi-slider-row"><label for="p-a">a</label><input type="range" id="s-a" min="-0.05" max="0.2" step="0.001" /><input type="number" step="any" id="p-a" data-label="a" value="0.02" /></div>
+              <div class="svi-slider-row"><label for="p-b">b</label><input type="range" id="s-b" min="0" max="1" step="0.005" /><input type="number" step="any" id="p-b" data-label="b" value="0.15" /></div>
+              <div class="svi-slider-row"><label for="p-rho">&rho;</label><input type="range" id="s-rho" min="-0.99" max="0.99" step="0.01" /><input type="number" step="any" id="p-rho" data-label="rho" value="-0.5" /></div>
+              <div class="svi-slider-row"><label for="p-m">m</label><input type="range" id="s-m" min="-0.5" max="0.5" step="0.005" /><input type="number" step="any" id="p-m" data-label="m" value="0.05" /></div>
+              <div class="svi-slider-row"><label for="p-sigma">&sigma;</label><input type="range" id="s-sigma" min="0.01" max="1" step="0.005" /><input type="number" step="any" id="p-sigma" data-label="sigma" value="0.2" /></div>
+              <div class="svi-slider-row"><label for="p-T">Maturity T</label><input type="range" id="s-T" min="0.05" max="5" step="0.05" /><input type="number" step="any" id="p-T" data-label="maturity" value="1" /></div>
+              <p>Parameters are for total variance $w(k)=a+b\{\rho(k-m)+\sqrt{(k-m)^2+\sigma^2}\}$ with $k=\ln(K/F)$. Requires $b\ge 0$, $|\rho|&lt;1$, $\sigma&gt;0$.</p>
+
+              <details class="svi-adv" id="svi-adv">
+                <summary>Option pricing inputs (optional)</summary>
+                <table border="0">
+                  <tr><td>Spot price S<sub>0</sub></td><td><input type="number" step="any" id="x-spot" data-label="spot price" value="100" /></td></tr>
+                  <tr><td>Risk-free rate r</td><td><input type="number" step="any" id="x-rate" data-label="risk-free rate" value="0.03" /></td><td>annualized decimal</td></tr>
+                  <tr><td>Dividend yield q</td><td><input type="number" step="any" id="x-yield" data-label="dividend yield" value="0" /></td><td>annualized decimal</td></tr>
+                  <tr><td>Strike K</td><td><input type="number" step="any" id="x-strike" data-label="strike" value="100" /></td><td>for the single-strike output</td></tr>
+                  <tr><td>Plot range of k</td><td><input type="number" step="any" id="x-krange" data-label="log-moneyness range" value="0.5" /></td><td>plots k in [&minus;range, range]</td></tr>
+                </table>
+              </details>
+
+              <h2>Output at the chosen strike</h2>
+              <table border="0">
+                <tr><td>Forward F</td><td><input id="o-fwd" type="text" readonly="readonly" /></td></tr>
+                <tr><td>Log-moneyness k</td><td><input id="o-k" type="text" readonly="readonly" /></td></tr>
+                <tr><td>Total variance w(k)</td><td><input id="o-w" type="text" readonly="readonly" /></td></tr>
+                <tr><td>Implied volatility</td><td><input id="o-vol" type="text" readonly="readonly" /></td></tr>
+                <tr><td>European call</td><td><input id="o-call" type="text" readonly="readonly" /></td></tr>
+                <tr><td>European put</td><td><input id="o-put" type="text" readonly="readonly" /></td></tr>
+                <tr><td>ATM volatility (k=0)</td><td><input id="o-atm" type="text" readonly="readonly" /></td></tr>
+                <tr><td>Arbitrage check</td><td id="o-arb"></td></tr>
+              </table>
+              <p id="svi-error" role="alert" aria-live="assertive" class="svi-warn"></p>
+              <p>
+                <button id="svi-reset" type="button">Reset</button>
+                <button id="svi-pin" type="button">Pin current curve as baseline</button>
+                <button id="svi-unpin" type="button">Clear baseline</button>
+              </p>
+            </form>
+
+            <h2>Interactive volatility smile</h2>
+            <p>Hover over a plot to read values. Pin a baseline, then move a slider: the dashed grey curve is the pinned smile and the blue curve is the current one.</p>
+            <canvas id="plot-vol" class="svi-plot" width="640" height="340" aria-label="SVI implied volatility smile"></canvas>
+
+            <h2>Interactive option prices</h2>
+            <canvas id="plot-price" class="svi-plot" width="640" height="340" aria-label="Option prices from SVI smile"></canvas>
+            <p><small>Solid lines: call (blue) and put (red) at the current parameters. Dashed grey: baseline call and put.</small></p>
+
+            <h2>Prices across strikes</h2>
+            <div style="overflow-x:auto;">
+              <table border="1">
+                <thead><tr><th>k</th><th>Strike</th><th>w(k)</th><th>Implied vol.</th><th>Call</th><th>Put</th><th>g(k)</th></tr></thead>
+                <tbody id="svi-table"></tbody>
+              </table>
+            </div>
+
+            <h2>Math formulas</h2>
+            <p><b>Raw SVI total variance</b> (Gatheral, 2004):</p>
+            <p>$$ w(k)=a+b\left(\rho\,(k-m)+\sqrt{(k-m)^2+\sigma^2}\right),\qquad k=\ln\frac{K}{F},\quad F=S_0e^{(r-q)T} $$</p>
+            <p><b>Implied volatility:</b> $\sigma_{imp}(k)=\sqrt{w(k)/T}$.</p>
+            <p><b>Black-76 prices</b> with the SVI volatility at each strike:</p>
+            <p>$$ C=e^{-rT}\left[F\,N(d_1)-K\,N(d_2)\right],\quad P=C-e^{-rT}(F-K),\quad d_{1,2}=\frac{-k\pm\tfrac12 w(k)}{\sqrt{w(k)}} $$</p>
+            <p><b>Parameter effects:</b> ATM-ish level rises with $a$; wing slopes are $b(1\pm\rho)$ (right/left); $m$ translates the smile; $\sigma$ rounds the vertex; the minimum total variance is $a+b\sigma\sqrt{1-\rho^2}$ at $k=m+\rho\sigma/\sqrt{1-\rho^2}$.</p>
+            <p><b>Butterfly (static) no-arbitrage</b> requires $w&gt;0$ and the density function non-negative:</p>
+            <p>$$ g(k)=\left(1-\frac{k\,w'}{2w}\right)^2-\frac{w'^2}{4}\left(\frac1w+\frac14\right)+\frac{w''}{2}\ge 0 $$</p>
+            <p>with $w'=b\left(\rho+\frac{k-m}{\sqrt{(k-m)^2+\sigma^2}}\right)$ and $w''=\frac{b\sigma^2}{((k-m)^2+\sigma^2)^{3/2}}$. Lee's moment formula bounds the wings: $b(1+|\rho|)\le 4/T$.</p>
+
+            <h2>Pros and cons of SVI</h2>
+            <div class="svi-proscons">
+              <div>
+                <h3>Pros</h3>
+                <ul>
+                  <li>Only five parameters, each with a clear geometric meaning.</li>
+                  <li>Linear wings match Lee's asymptotics for extreme strikes.</li>
+                  <li>Fast and stable to fit; smooth curve gives smooth prices and Greeks.</li>
+                  <li>Closed-form derivatives make arbitrage checks easy.</li>
+                  <li>Widely used for equity and index volatility surfaces.</li>
+                </ul>
+              </div>
+              <div>
+                <h3>Cons</h3>
+                <ul>
+                  <li>Calibration is non-convex; the fit can depend on starting values.</li>
+                  <li>No built-in guarantee of no butterfly arbitrage: it must be checked or imposed.</li>
+                  <li>Each maturity is fitted separately; calendar-spread arbitrage across slices needs extra constraints (e.g. SSVI).</li>
+                  <li>Purely a fitting form: no dynamics, so it is not for pricing path-dependent products on its own.</li>
+                  <li>Parameters can be unstable and correlated, and short-dated smiles can be hard to fit.</li>
+                </ul>
+              </div>
+            </div>
+
+            <h2>FAQ</h2>
+            <div class="faq-section">
+              <div class="faq-item">
+                <details><summary>What does SVI stand for?</summary><p>Stochastic Volatility Inspired, a parametrization of the implied total variance smile introduced by Jim Gatheral. It mimics the large-maturity shape of the Heston smile but is a curve-fitting form, not a stochastic process.</p></details>
+                <details><summary>What does each raw SVI parameter do?</summary><p><b>a</b> shifts the smile vertically; <b>b</b> controls the angle between the wings; <b>&rho;</b> rotates the smile and sets the skew (negative &rho; gives a steeper left wing, typical of equities); <b>m</b> shifts it horizontally; <b>&sigma;</b> smooths the vertex, with small &sigma; giving a sharp V shape.</p></details>
+                <details><summary>Why use total variance instead of volatility?</summary><p>Total variance $w=\sigma_{imp}^2T$ has linear wings, matches Lee's moment formula, and makes calendar arbitrage a simple monotonicity-in-maturity condition.</p></details>
+                <details><summary>How do I avoid arbitrage?</summary><p>Keep $w(k)&gt;0$, make sure $g(k)\ge0$ for all $k$ (the table shows $g$ and the check above flags violations), and keep $b(1+|\rho|)\le4/T$. For surfaces, consider SSVI or add calendar constraints.</p></details>
+                <details><summary>Are the option prices from a model?</summary><p>No. They are Black-76 prices using the SVI implied volatility at each strike, so they reproduce the smile exactly. Prices are in the same currency units as the spot.</p></details>
+                <details><summary>Can I use this for several maturities?</summary><p>This tool shows one slice at a time. Change T and the parameters to inspect another slice; a full surface needs parameters per maturity that respect calendar consistency.</p></details>
+              </div>
+            </div>
+            <p><small>This is an educational calculator, not investment advice. It does not calibrate to market quotes.</small></p>
+          </div>
+
+          <div class="article related-calculators">
+            <h2>Related Calculators</h2>
+            <p><a href="sabr-model-calculator.html">SABR model calculator for implied volatility smiles</a></p>
+            <p><a href="heston-option-calculator.html">Heston stochastic volatility option calculator</a></p>
+            <p><a href="local-volatility-calculator.html">Dupire local volatility calculator</a></p>
+            <p><a href="ImpliedVolatility.html">Implied volatility calculator (Brent + Newton-Raphson)</a></p>
+          </div>
+        </div>
+        <div class="sidebar">
+          <div class="gadget">
+            <h2 class="star"><span>Search</span></h2>
+            <div class="searchform"></div>
+          </div>
+        </div>
+        <div class="clr"></div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div class="footer_resize">
+        <p class="lf">Copyright &copy; QuantCalc. All Rights Reserved</p>
+        <div class="clr"></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function () {
+  var DEFAULTS = { a: 0.02, b: 0.15, rho: -0.5, m: 0.05, sigma: 0.2, T: 1 };
+  var ADV = { spot: 100, rate: 0.03, yield: 0, strike: 100, krange: 0.5 };
+  var baseline = null;
+  var cache = null;
+  var NPTS = 201;
+
+  function $(id) { return document.getElementById(id); }
+
+  function normCdf(x) {
+    var ax = Math.abs(x), r;
+    if (ax > 37) { r = 0; }
+    else {
+      var e = Math.exp(-ax * ax / 2);
+      if (ax < 7.07106781186547) {
+        var n = 0.0352624965998911 * ax + 0.700383064443688;
+        n = n * ax + 6.37396220353165; n = n * ax + 33.912866078383;
+        n = n * ax + 112.079291497871; n = n * ax + 221.213596169931;
+        n = n * ax + 220.206867912376;
+        var d = 0.0883883476483184 * ax + 1.75566716318264;
+        d = d * ax + 16.064177579207; d = d * ax + 86.7807322029461;
+        d = d * ax + 296.564248779674; d = d * ax + 637.333633378831;
+        d = d * ax + 793.826512519948; d = d * ax + 440.413735824752;
+        r = e * n / d;
+      } else {
+        var b = ax + 1 / (ax + 2 / (ax + 3 / (ax + 4 / (ax + 0.65))));
+        r = e / b / 2.506628274631;
+      }
+    }
+    return x > 0 ? 1 - r : r;
+  }
+
+  function readParams() {
+    var p = {
+      a: parseFloat($("p-a").value), b: parseFloat($("p-b").value),
+      rho: parseFloat($("p-rho").value), m: parseFloat($("p-m").value),
+      sigma: parseFloat($("p-sigma").value), T: parseFloat($("p-T").value),
+      spot: parseFloat($("x-spot").value), rate: parseFloat($("x-rate").value),
+      yield: parseFloat($("x-yield").value), strike: parseFloat($("x-strike").value),
+      krange: parseFloat($("x-krange").value)
+    };
+    var err = "";
+    for (var key in p) { if (!isFinite(p[key])) { err = "Please enter a valid number for " + key + "."; break; } }
+    if (!err) {
+      if (p.b < 0) err = "b must be non-negative.";
+      else if (Math.abs(p.rho) >= 1) err = "rho must satisfy -1 < rho < 1.";
+      else if (p.sigma <= 0) err = "sigma must be positive.";
+      else if (p.T <= 0) err = "Maturity must be positive.";
+      else if (p.spot <= 0 || p.strike <= 0) err = "Spot and strike must be positive.";
+      else if (p.krange <= 0) err = "Plot range must be positive.";
+    }
+    p.err = err;
+    return p;
+  }
+
+  function wOf(p, k) { var x = k - p.m; return p.a + p.b * (p.rho * x + Math.sqrt(x * x + p.sigma * p.sigma)); }
+
+  function gOf(p, k) {
+    var x = k - p.m, s = Math.sqrt(x * x + p.sigma * p.sigma);
+    var w = wOf(p, k), w1 = p.b * (p.rho + x / s), w2 = p.b * p.sigma * p.sigma / (s * s * s);
+    var t = 1 - k * w1 / (2 * w);
+    return t * t - w1 * w1 / 4 * (1 / w + 0.25) + w2 / 2;
+  }
+
+  function black(F, K, T, vol, df) {
+    var sd = vol * Math.sqrt(T);
+    if (!(sd > 0)) { return { c: df * Math.max(F - K, 0), p: df * Math.max(K - F, 0) }; }
+    var d1 = (Math.log(F / K) + 0.5 * sd * sd) / sd, d2 = d1 - sd;
+    var c = df * (F * normCdf(d1) - K * normCdf(d2));
+    return { c: c, p: c - df * (F - K) };
+  }
+
+  function point(p, k) {
+    var F = p.spot * Math.exp((p.rate - p.yield) * p.T), df = Math.exp(-p.rate * p.T);
+    var K = F * Math.exp(k), w = wOf(p, k), vol = w > 0 ? Math.sqrt(w / p.T) : NaN;
+    var pr = w > 0 ? black(F, K, p.T, vol, df) : { c: NaN, p: NaN };
+    return { k: k, K: K, w: w, vol: vol, c: pr.c, p: pr.p, g: w > 0 ? gOf(p, k) : NaN };
+  }
+
+  function curve(p) {
+    var pts = [];
+    for (var i = 0; i < NPTS; i++) pts.push(point(p, -p.krange + 2 * p.krange * i / (NPTS - 1)));
+    return pts;
+  }
+
+  function fmt(x, d) { return isFinite(x) ? x.toFixed(d) : "n/a"; }
+
+  function drawPlot(canvasId, series, xLabel, yLabel, hoverX) {
+    var cv = $(canvasId), ctx = cv.getContext("2d");
+    var W = cv.width, H = cv.height, L = 62, R = 14, T = 16, B = 46;
+    ctx.clearRect(0, 0, W, H);
+    var xmin = Infinity, xmax = -Infinity, ymin = Infinity, ymax = -Infinity;
+    series.forEach(function (s) {
+      s.pts.forEach(function (q) {
+        if (!isFinite(q.y)) return;
+        xmin = Math.min(xmin, q.x); xmax = Math.max(xmax, q.x);
+        ymin = Math.min(ymin, q.y); ymax = Math.max(ymax, q.y);
+      });
+    });
+    if (!isFinite(xmin)) { ctx.fillText("No valid data", 20, 30); return null; }
+    var pad = (ymax - ymin) * 0.08 || 0.01;
+    ymin -= pad; ymax += pad;
+    if (canvasId === "plot-price") ymin = Math.max(0, ymin);
+    function X(x) { return L + (x - xmin) / (xmax - xmin) * (W - L - R); }
+    function Y(y) { return H - B - (y - ymin) / (ymax - ymin) * (H - T - B); }
+    ctx.font = "12px sans-serif"; ctx.fillStyle = "#333"; ctx.strokeStyle = "#e5e5e5"; ctx.lineWidth = 1;
+    var i, v;
+    for (i = 0; i <= 5; i++) {
+      v = ymin + (ymax - ymin) * i / 5;
+      ctx.beginPath(); ctx.moveTo(L, Y(v)); ctx.lineTo(W - R, Y(v)); ctx.stroke();
+      ctx.textAlign = "right"; ctx.fillText(v.toFixed(canvasId === "plot-vol" ? 3 : 2), L - 6, Y(v) + 4);
+    }
+    for (i = 0; i <= 5; i++) {
+      v = xmin + (xmax - xmin) * i / 5;
+      ctx.beginPath(); ctx.moveTo(X(v), T); ctx.lineTo(X(v), H - B); ctx.stroke();
+      ctx.textAlign = "center"; ctx.fillText(v.toFixed(xmax > 10 ? 1 : 2), X(v), H - B + 16);
+    }
+    ctx.strokeStyle = "#888"; ctx.strokeRect(L, T, W - L - R, H - T - B);
+    ctx.fillText(xLabel, (L + W - R) / 2, H - 8);
+    ctx.save(); ctx.translate(14, (T + H - B) / 2); ctx.rotate(-Math.PI / 2); ctx.fillText(yLabel, 0, 0); ctx.restore();
+    series.forEach(function (s) {
+      ctx.beginPath(); ctx.strokeStyle = s.color; ctx.lineWidth = s.dash ? 1.5 : 2.2;
+      ctx.setLineDash(s.dash ? [6, 4] : []);
+      var started = false;
+      s.pts.forEach(function (q) {
+        if (!isFinite(q.y)) { started = false; return; }
+        if (!started) { ctx.moveTo(X(q.x), Y(q.y)); started = true; } else ctx.lineTo(X(q.x), Y(q.y));
+      });
+      ctx.stroke();
+    });
+    ctx.setLineDash([]);
+    var lx = L + 8;
+    series.forEach(function (s, idx) {
+      ctx.strokeStyle = s.color; ctx.setLineDash(s.dash ? [6, 4] : []);
+      ctx.beginPath(); ctx.moveTo(lx, T + 12 + idx * 16); ctx.lineTo(lx + 22, T + 12 + idx * 16); ctx.stroke();
+      ctx.setLineDash([]); ctx.fillStyle = "#333"; ctx.textAlign = "left"; ctx.fillText(s.name, lx + 28, T + 16 + idx * 16);
+    });
+    if (hoverX !== null && hoverX !== undefined) {
+      var base = series[0].pts, best = 0, bd = Infinity;
+      base.forEach(function (q, j) { var dd = Math.abs(q.x - hoverX); if (dd < bd) { bd = dd; best = j; } });
+      var cx = X(base[best].x);
+      ctx.strokeStyle = "#999"; ctx.beginPath(); ctx.moveTo(cx, T); ctx.lineTo(cx, H - B); ctx.stroke();
+      var lines = [xLabel + " = " + base[best].x.toFixed(3)];
+      series.forEach(function (s) {
+        if (isFinite(s.pts[best].y)) {
+          ctx.fillStyle = s.color; ctx.beginPath(); ctx.arc(cx, Y(s.pts[best].y), 3.5, 0, 6.2832); ctx.fill();
+          lines.push(s.name + ": " + s.pts[best].y.toFixed(canvasId === "plot-vol" ? 4 : 3));
+        }
+      });
+      var bw = 190, bh = 8 + lines.length * 15, bx = cx + 10 > W - R - bw ? cx - bw - 10 : cx + 10, by = H - B - bh - 8;
+      ctx.fillStyle = "rgba(255,255,255,0.92)"; ctx.strokeStyle = "#999"; ctx.fillRect(bx, by, bw, bh); ctx.strokeRect(bx, by, bw, bh);
+      ctx.fillStyle = "#222"; ctx.textAlign = "left";
+      lines.forEach(function (t, j) { ctx.fillText(t, bx + 6, by + 15 + j * 15); });
+    }
+    return { xmin: xmin, xmax: xmax, L: L, R: R, W: W };
+  }
+
+  function render(hover) {
+    var p = readParams();
+    $("svi-error").textContent = p.err;
+    if (p.err) return;
+    var pts = curve(p);
+    cache = { p: p, pts: pts };
+    var one = point(p, Math.log(p.strike / (p.spot * Math.exp((p.rate - p.yield) * p.T))));
+    var F = p.spot * Math.exp((p.rate - p.yield) * p.T);
+    $("o-fwd").value = fmt(F, 4); $("o-k").value = fmt(one.k, 5); $("o-w").value = fmt(one.w, 6);
+    $("o-vol").value = fmt(one.vol, 6); $("o-call").value = fmt(one.c, 4); $("o-put").value = fmt(one.p, 4);
+    var atm = wOf(p, 0);
+    $("o-atm").value = atm > 0 ? fmt(Math.sqrt(atm / p.T), 6) : "n/a";
+    var minW = Infinity, minG = Infinity;
+    pts.forEach(function (q) { minW = Math.min(minW, q.w); if (isFinite(q.g)) minG = Math.min(minG, q.g); });
+    var issues = [];
+    if (minW <= 0) issues.push("total variance is not positive");
+    else if (minG < 0) issues.push("butterfly arbitrage: g(k) &lt; 0 (min " + minG.toFixed(3) + ")");
+    if (p.b * (1 + Math.abs(p.rho)) > 4 / p.T) issues.push("wing slope b(1+|&rho;|) exceeds 4/T");
+    $("o-arb").innerHTML = issues.length ? '<span class="svi-warn">Warning: ' + issues.join("; ") + "</span>" : '<span class="svi-ok">No violation found on the plotted grid</span>';
+
+    var useK = p.krange;
+    var volSeries = [{ name: "SVI smile", color: "#1f5fbf", pts: pts.map(function (q) { return { x: q.k, y: q.vol }; }) }];
+    var callSeries = [{ name: "Call", color: "#1f5fbf", pts: pts.map(function (q) { return { x: q.K, y: q.c }; }) },
+                      { name: "Put", color: "#cc3333", pts: pts.map(function (q) { return { x: q.K, y: q.p }; }) }];
+    if (baseline) {
+      var bp = baseline.p, bpts = curve(Object.assign({}, bp, { krange: useK, spot: p.spot, rate: p.rate, yield: p.yield }));
+      volSeries.push({ name: "Baseline", color: "#888", dash: true, pts: bpts.map(function (q) { return { x: q.k, y: q.vol }; }) });
+      callSeries.push({ name: "Baseline call", color: "#888", dash: true, pts: bpts.map(function (q) { return { x: q.K, y: q.c }; }) });
+      callSeries.push({ name: "Baseline put", color: "#aaa", dash: true, pts: bpts.map(function (q) { return { x: q.K, y: q.p }; }) });
+    }
+    cache.vol = drawPlot("plot-vol", volSeries, "k", "Implied vol.", hover && hover.id === "plot-vol" ? hover.x : null);
+    cache.price = drawPlot("plot-price", callSeries, "Strike", "Option price", hover && hover.id === "plot-price" ? hover.x : null);
+    cache.volSeries = volSeries; cache.callSeries = callSeries;
+
+    var rows = "";
+    for (var i = 0; i < NPTS; i += 10) {
+      var q = pts[i];
+      rows += "<tr><td>" + q.k.toFixed(3) + "</td><td>" + fmt(q.K, 3) + "</td><td>" + fmt(q.w, 5) + "</td><td>" + fmt(q.vol, 5) +
+        "</td><td>" + fmt(q.c, 4) + "</td><td>" + fmt(q.p, 4) + "</td><td>" + fmt(q.g, 3) + "</td></tr>";
+    }
+    $("svi-table").innerHTML = rows;
+  }
+
+  function bindHover(id) {
+    var cv = $(id);
+    function move(ev) {
+      if (!cache || !cache[id === "plot-vol" ? "vol" : "price"]) return;
+      var geo = cache[id === "plot-vol" ? "vol" : "price"], r = cv.getBoundingClientRect();
+      var px = (ev.clientX - r.left) * cv.width / r.width;
+      var x = geo.xmin + (px - geo.L) / (geo.W - geo.L - geo.R) * (geo.xmax - geo.xmin);
+      render({ id: id, x: x });
+    }
+    cv.addEventListener("mousemove", move);
+    cv.addEventListener("mouseleave", function () { render(null); });
+    cv.addEventListener("touchmove", function (e) { if (e.touches[0]) { move(e.touches[0]); e.preventDefault(); } }, { passive: false });
+  }
+
+  var keys = ["a", "b", "rho", "m", "sigma", "T"];
+  keys.forEach(function (k) {
+    var num = $("p-" + k), sl = $("s-" + k);
+    sl.value = num.value;
+    sl.addEventListener("input", function () { num.value = sl.value; render(null); });
+    num.addEventListener("input", function () { sl.value = num.value; render(null); });
+  });
+  ["spot", "rate", "yield", "strike", "krange"].forEach(function (k) { $("x-" + k).addEventListener("input", function () { render(null); }); });
+  bindHover("plot-vol"); bindHover("plot-price");
+
+  $("svi-reset").addEventListener("click", function () {
+    keys.forEach(function (k) { $("p-" + k).value = DEFAULTS[k]; $("s-" + k).value = DEFAULTS[k]; });
+    for (var k in ADV) $("x-" + k).value = ADV[k];
+    baseline = null; render(null);
+  });
+  $("svi-pin").addEventListener("click", function () { if (cache && !cache.p.err) { baseline = { p: cache.p }; render(null); } });
+  $("svi-unpin").addEventListener("click", function () { baseline = null; render(null); });
+
+  render(null);
+})();
+</script>
+</body>
+</html>
