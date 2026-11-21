@@ -126,3 +126,36 @@ body {
 .calc-guide mjx-container[display="true"] { max-width: 100%; overflow-x: auto; overflow-y: hidden; }
 .calc-guide table.calc-guide-table { border-collapse: collapse; max-width: 100%; }
 .calc-guide table.calc-guide-table td, .calc-guide table.calc-guide-table th { border: 1px solid #ccd; padding: 3px 8px; text-align: left; }
+
+/* ---------------- MOBILE / RESPONSIVE ---------------- */
+img, canvas, svg, video { max-width: 100%; height: auto; }
+.article { overflow-x: auto; }
+pre, code { max-width: 100%; overflow-x: auto; }
+
+@media (max-width: 900px) {
+    .header { min-width: 0; }
+    .header_resize,
+    .content_resize {
+        width: 100%;
+        padding: 0 12px;
+    }
+    .header_resize { flex-direction: column; align-items: flex-start; gap: 10px; }
+    .menu_nav ul { flex-wrap: wrap; gap: 8px 16px; }
+    .logo h1 a, .logo .site_title a { font-size: 34px; }
+    .logo small { padding-left: 60px; }
+
+    .content { padding: 16px 0; }
+    .content_resize { flex-direction: column; gap: 0; }
+    .mainbar, .sidebar { width: 100% !important; float: none !important; }
+    .article { padding: 14px; margin-bottom: 16px; }
+    .article h1, .article h2 { font-size: 20px; }
+
+    table { display: block; max-width: 100%; overflow-x: auto; }
+    input[type="text"], input[type="number"], input[type="search"], select, textarea {
+        max-width: 100%;
+        font-size: 16px; /* prevents iOS zoom on focus */
+        min-height: 36px;
+    }
+    input[type="button"], input[type="submit"], button { min-height: 40px; font-size: 16px; }
+    .footer, .fbg { min-width: 0 !important; width: 100% !important; }
+}
