@@ -6,14 +6,26 @@
  * Renamed from N to cdfN to prevent declaration conflicts.
  */
 function cdfN(x){
-    const a1 = 0.319381530, a2 = -0.356563782, a3 = 1.781477937, a4 = -1.821255978, a5 = 1.330274429;
-      const p = 0.2316419;
-      const sign = (x >= 0) ? 1 : -1;
-      const absX = Math.abs(x);
-      const t = 1.0 / (1.0 + p * absX);
-      const z = 1.0 / Math.sqrt(2.0 * Math.PI) * Math.exp(-0.5 * absX * absX);
-      const y = 1.0 - z * (a1 * t + a2 * t * t + a3 * Math.pow(t, 3) + a4 * Math.pow(t, 4) + a5 * Math.pow(t, 5));
-      return sign === 1 ? y : 1.0 - y;
+    // Chebyshev erfc fit (Numerical Recipes erfccheb), accurate to ~1e-16 in relative terms,
+    // including the far tails that get multiplied by large (X/S)^kappa factors.
+    const cof = [-1.3026537197817094, 6.4196979235649026e-1, 1.9476473204185836e-2,
+      -9.561514786808631e-3, -9.46595344482036e-4, 3.66839497852761e-4,
+      4.2523324806907e-5, -2.0278578112534e-5, -1.624290004647e-6,
+      1.303655835580e-6, 1.5626441722e-8, -8.5238095915e-8, 6.529054439e-9,
+      5.059343495e-9, -9.91364156e-10, -2.27365122e-10, 9.6467911e-11,
+      2.394038e-12, -6.886027e-12, 8.94487e-13, 3.13092e-13, -1.12708e-13,
+      3.81e-16, 7.106e-15, -1.523e-15, -9.4e-17, 1.21e-16, -2.8e-17];
+    const z = Math.abs(x) / Math.SQRT2;
+    const t = 2.0 / (2.0 + z);
+    const ty = 4.0 * t - 2.0;
+    let d = 0.0, dd = 0.0;
+    for (let j = cof.length - 1; j > 0; j--) {
+      const tmp = d;
+      d = ty * d - dd + cof[j];
+      dd = tmp;
+    }
+    const erfc = t * Math.exp(-z * z + 0.5 * (cof[0] + ty * d) - dd);
+    return x >= 0 ? 1.0 - 0.5 * erfc : 0.5 * erfc;
   };
   
   
@@ -38,7 +50,7 @@ function sign(a) {
 }
 // Support function for Bivariate Normal Cumulative Distribution Function
 function f(x, y, aprime, bprime,  rho) {
-r = aprime * (2.0 * x - aprime) + bprime * (2.0 * y - bprime) + 2.0 * rho * (x - aprime) * (y - bprime);
+const r = aprime * (2.0 * x - aprime) + bprime * (2.0 * y - bprime) + 2.0 * rho * (x - aprime) * (y - bprime);
 return Math.exp(r);
 }
   /**
@@ -54,14 +66,14 @@ return Math.exp(r);
 function M(a, b,rho)
   {
   
-      pi = 3.14159265359;
+      const pi = 3.14159265359;
       if ((a <= 0.0) && (b <= 0.0) && (rho <= 0.0))
       {
-          aprime = a / Math.sqrt(2.0 * (1.0 - rho * rho));
-          bprime = b / Math.sqrt(2.0 * (1 - rho * rho));
-          A=[ 0.3253030, 0.4211071, 0.1334425, 0.006374323 ];
-          B=[ 0.1337764, 0.6243247, 1.3425378, 2.2626645 ];
-          sum = 0.0;
+          const aprime = a / Math.sqrt(2.0 * (1.0 - rho * rho));
+          const bprime = b / Math.sqrt(2.0 * (1 - rho * rho));
+          const A=[ 0.3253030, 0.4211071, 0.1334425, 0.006374323 ];
+          const B=[ 0.1337764, 0.6243247, 1.3425378, 2.2626645 ];
+          let sum = 0.0;
           for (let i = 0; i < 4; i++)
               for (let j = 0; j < 4; j++)
                   sum = sum + A[i] * A[j] * f(B[i], B[j], aprime, bprime, rho);
@@ -79,10 +91,10 @@ function M(a, b,rho)
       }
       else if (a * b * rho >= 0.0)
       {
-          denum = Math.sqrt(a*a - 2.0 * rho * a * b + b * b);
-          rho1 = ((rho * a - b) * sign(a)) / denum;
-          rho2 = ((rho * b - a) * sign(b)) / denum;
-          delta = (1.0 - sign(a) * sign(b)) / 4.0;
+          const denum = Math.sqrt(a*a - 2.0 * rho * a * b + b * b);
+          const rho1 = ((rho * a - b) * sign(a)) / denum;
+          const rho2 = ((rho * b - a) * sign(b)) / denum;
+          const delta = (1.0 - sign(a) * sign(b)) / 4.0;
           return M(a, 0.0, rho1) +
               M(b, 0.0, rho2) - delta;
       }
@@ -215,7 +227,7 @@ function M(a, b,rho)
       // 1. Calculate constant and power terms
       const B_0=Math.max(K,r*K/(r-b));
       const betaVal = calculateBeta(r,b,sigma);
-      beta_1=betaVal-1;
+      let beta_1=betaVal-1;
       if(Math.abs(beta_1)<0.0001){beta_1=0.0001;}
       const B_inf=betaVal*K/(beta_1);
       const X = EX(T,B_0,B_inf,b,r,sigma,K);
@@ -373,7 +385,7 @@ function M(a, b,rho)
       const t=0.5*(Math.sqrt(5.0)-1.0)*T;
       const B_0=Math.max(K,r*K/(r-b));
       const beta = calculateBeta(r,b,sigma);
-      beta_1=beta-1;
+      let beta_1=beta-1;
       if(Math.abs(beta_1)<0.0001){beta_1=0.0001;}
       const B_inf=beta*K/(beta_1);
       const X = EX(T,B_0,B_inf,b,r,sigma,K);
@@ -425,12 +437,14 @@ function M(a, b,rho)
         if(q>1.0){q=1.0;}
         if(r<-1.0){r=-1.0;}
         if(q<-1.0){q=-1.0;}
-        //BS's approximation doesn't allow q=0
-        if(q<0.01 && q>=0.0){
+        //With q<=0 early exercise of a call is never optimal, so the American price equals the European one
+        if(q<=0.0){
+          return Math.max(calculateBSPrice(S, K, T, r, r-q, s),0);
+        }
+        //BS's approximation doesn't allow small q
+        if(q<0.01){
         q=0.01;}
-        if(q>-0.01 && q<0.0){
-        q=-0.01;}
-      price=2*calculate_c_bar_bar(S, K, T, s, r, q)-calculateCBar(S,K,T,s,r,r-q);
+      let price=2*calculate_c_bar_bar(S, K, T, s, r, q)-calculateCBar(S,K,T,s,r,r-q);
       price=Math.max(price,0);
       return price;
   };
@@ -456,7 +470,7 @@ function M(a, b,rho)
       q=0.01;}
     if(q>-0.01 && q<0.0){
       q=-0.01;}
-      price=2*calculate_p_bar_bar(S, K, T, s, r, q)-calculatePBar(S,K,T,s,r,r-q);
+      let price=2*calculate_p_bar_bar(S, K, T, s, r, q)-calculatePBar(S,K,T,s,r,r-q);
       price=Math.max(price,0);
       return price;
   };
