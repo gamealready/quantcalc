@@ -6,6 +6,13 @@
  * Renamed from N to cdfN to prevent declaration conflicts.
  */
 function cdfN(x){
+    return Math.exp(cdfNLog(x));
+}
+
+/**
+ * Natural log of the normal CDF, stable in the far lower tail where cdfN underflows.
+ */
+function cdfNLog(x){
     // Chebyshev erfc fit (Numerical Recipes erfccheb), accurate to ~1e-16 in relative terms,
     // including the far tails that get multiplied by large (X/S)^kappa factors.
     const cof = [-1.3026537197817094, 6.4196979235649026e-1, 1.9476473204185836e-2,
@@ -24,9 +31,16 @@ function cdfN(x){
       d = ty * d - dd + cof[j];
       dd = tmp;
     }
-    const erfc = t * Math.exp(-z * z + 0.5 * (cof[0] + ty * d) - dd);
-    return x >= 0 ? 1.0 - 0.5 * erfc : 0.5 * erfc;
+    const logErfc = Math.log(t) - z * z + 0.5 * (cof[0] + ty * d) - dd;
+    return x >= 0 ? Math.log1p(-0.5 * Math.exp(logErfc)) : Math.log(0.5) + logErfc;
   };
+
+/**
+ * base^kappa * N(x) computed in log space so a huge power times a vanishing tail doesn't give Infinity*0.
+ */
+function powTimesN(base, kappa, x){
+    return Math.exp(kappa * Math.log(base) + cdfNLog(x));
+}
   
   
   /**
@@ -197,16 +211,15 @@ function M(a, b,rho)
   
     // Argument for the second N(d) term
     const d2_arg = -(Math.log((X_phi * X_phi) / (S * H)) + numeratorBase * T) / sigmaRootT;
-    const N_d2 = cdfN(d2_arg);
   
     // $e^{\lambda T} S^{\gamma}$
     const factor = Math.exp(lambda * T) * Math.pow(S, gamma);
   
-    // $(X/S)^{\kappa}$
-    const ratioPower = Math.pow(X_phi / S, kappa);
+    // $(X/S)^{\kappa} N(d_2)$
+    const ratioTerm = powTimesN(X_phi / S, kappa, d2_arg);
   
     // The full phi equation
-    const phiResult = factor * (N_d1 - ratioPower * N_d2);
+    const phiResult = factor * (N_d1 - ratioTerm);
   
     return phiResult;
   };
@@ -439,14 +452,18 @@ function M(a, b,rho)
         if(q<-1.0){q=-1.0;}
         //With q<=0 early exercise of a call is never optimal, so the American price equals the European one
         if(q<=0.0){
-          return Math.max(calculateBSPrice(S, K, T, r, r-q, s),0);
+          // American value is never below immediate exercise (matters when r<0)
+          return Math.max(calculateBSPrice(S, K, T, r, r-q, s),S-K,0);
         }
         //BS's approximation doesn't allow small q
         if(q<0.01){
         q=0.01;}
       let price=2*calculate_c_bar_bar(S, K, T, s, r, q)-calculateCBar(S,K,T,s,r,r-q);
-      price=Math.max(price,0);
-      return price;
+      // The American call is never below the European call nor above S. Huge kappa (high r, low vol,
+      // deep OTM) can overflow the approximation; the early-exercise premium is negligible there.
+      const euro=Math.max(calculateBSPrice(S, K, T, r, r-q, s),S-K,0);
+      if(!Number.isFinite(price)){return euro;}
+      return Math.min(Math.max(price,euro),S);
   };
   
   /**
@@ -461,16 +478,6 @@ function M(a, b,rho)
     if(q>1.0){q=1.0;}
     if(r<-1.0){r=-1.0;}
     if(q<-1.0){q=-1.0;}
-    //BS's approximation doesn't allow q=0 r=0
-    if(r<0.01 && r>=0.0){
-        r=0.01;}
-    if(r>-0.01 && r<0.0){
-        r=-0.01;}
-    if(q<0.01 && q>=0.0){
-      q=0.01;}
-    if(q>-0.01 && q<0.0){
-      q=-0.01;}
-      let price=2*calculate_p_bar_bar(S, K, T, s, r, q)-calculatePBar(S,K,T,s,r,r-q);
-      price=Math.max(price,0);
-      return price;
+    // Put-call symmetry: P(S,K,r,q) = C(K,S,q,r); the call routine handles r<=0 (no early exercise) exactly
+    return bs2002CallPrice(K, S, T, s, q, r);
   };
