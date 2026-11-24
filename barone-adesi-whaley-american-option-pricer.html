@@ -222,6 +222,11 @@ function bawAmericanOption(S, K, T, r, q, sigma, optionType) {
 
     if (T <= 0) return Math.max(0, (optionType === 'put') ? K - S : S - K);
     
+    // A call with q<=0 (or a put with r<=0) is never exercised early, so it equals the European price
+    if ((optionType !== 'put' && q <= 0) || (optionType === 'put' && r <= 0)) {
+      return blackScholes(S, K, T, r, q, sigma, optionType).price;
+    }
+
     const { m1, m2 } = getM(r, q, sigma,T);
     const m = (optionType === 'put') ? m1 : m2;
     
