@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>American Option Pricer – Numerical PDE (Crank-Nicolson PSOR) - QuantCalc</title>
+<meta name="description" content="Price American calls and puts with a Crank-Nicolson finite-difference PDE solver and projected SOR, with delta, gamma, exercise boundary and European comparison." />
+  <link rel="canonical" href="https://www.quantcalc.net/pde-american-option-calculator.html" />
+  <link href="style.css" rel="stylesheet" type="text/css" />
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']]
+      }
+    };
+  </script>
+  <script id="MathJax-script" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <script type="text/javascript" src="js/caplet.js"></script>
+  <script type="text/javascript" src="js/pde-american.js"></script>
+  <script type="text/javascript" src="js/calculator-schema.js"></script>
+</head>
+<body>
+  <div class="main">
+    <div class="header">
+      <div class="header_resize">
+        <div class="logo"><div class="site_title"><a href="index.html">Quant<span>Calc</span> <small>Quantitative Finance Calculators for Pricing, Calibration &amp; Risk</small></a></div></div>
+        <div class="menu_nav">
+          <ul>
+            <li><a href="index.html">Home</a></li>
+            <li class="active"><a href="pricing.html">Pricing</a></li>
+            <li><a href="calibration.html">Calibration</a></li>
+            <li><a href="paper.html">Paper</a></li>
+            <li><a href="risk.html">Risk Management</a></li>
+            <li><a href="about.html">About us</a></li>
+            <li><a href="contact.html">Contact us</a></li>
+          </ul>
+        </div>
+        <div class="clr"></div>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="content_resize">
+        <div class="mainbar">
+          <div class="article">
+            <h1>American Option Pricer – Numerical PDE</h1><div class="clr"></div>
+            <p>Price American calls and puts by solving the Black–Scholes PDE on a finite-difference grid with Crank–Nicolson time stepping, and enforcing early exercise with projected successive over-relaxation (PSOR). All calculations run in your browser.</p>
+
+            <form name="pdeForm" id="pde-form">
+              <h2>Inputs</h2>
+              <table border="0">
+                <tr><td>Option type</td><td><select name="optionType"><option value="put">American put</option><option value="call">American call</option></select></td></tr>
+                <tr><td>Spot price S<sub>0</sub></td><td><input type="number" step="any" name="spot" data-label="spot price" value="100" /></td><td></td></tr>
+                <tr><td>Strike K</td><td><input type="number" step="any" name="strike" data-label="strike" value="100" /></td><td></td></tr>
+                <tr><td>Maturity T</td><td><input type="number" step="any" name="maturity" data-label="maturity" value="1" /></td><td>years</td></tr>
+                <tr><td>Risk-free rate r</td><td><input type="number" step="any" name="rate" data-label="risk-free rate" value="0.05" /></td><td>annualized decimal</td></tr>
+                <tr><td>Dividend yield q</td><td><input type="number" step="any" name="yield" data-label="dividend yield" value="0" /></td><td>annualized decimal</td></tr>
+                <tr><td>Volatility σ</td><td><input type="number" step="any" name="volatility" data-label="volatility" value="0.2" /></td><td>annualized decimal</td></tr>
+                <tr><td>Space steps</td><td><input type="number" step="any" name="spaceSteps" data-label="space steps" value="400" /></td><td>20 – 4,000</td></tr>
+                <tr><td>Time steps</td><td><input type="number" step="any" name="timeSteps" data-label="time steps" value="200" /></td><td>4 – 4,000</td></tr>
+              </table>
+
+              <h2>Results</h2>
+              <table border="0">
+                <tr><td>American option price (PDE)</td><td><input name="price" type="text" readonly="readonly" value="" /></td><td></td></tr>
+                <tr><td>Delta</td><td><input name="delta" type="text" readonly="readonly" value="" /></td><td></td></tr>
+                <tr><td>Gamma</td><td><input name="gamma" type="text" readonly="readonly" value="" /></td><td></td></tr>
+                <tr><td>European price (same PDE grid)</td><td><input name="european" type="text" readonly="readonly" value="" /></td><td></td></tr>
+                <tr><td>Black–Scholes European price</td><td><input name="bs" type="text" readonly="readonly" value="" /></td><td>closed form</td></tr>
+                <tr><td>Early exercise premium</td><td><input name="premium" type="text" readonly="readonly" value="" /></td><td>American − European (PDE)</td></tr>
+                <tr><td>Immediate exercise value</td><td><input name="intrinsic" type="text" readonly="readonly" value="" /></td><td></td></tr>
+                <tr><td>Critical exercise price (t=0)</td><td><input name="boundary" type="text" readonly="readonly" value="" /></td><td>grid estimate, n/a if none</td></tr>
+                <tr><td>Average PSOR iterations</td><td><input name="iterations" type="text" readonly="readonly" value="" /></td><td>per time step</td></tr>
+              </table>
+              <p id="pde-error" role="alert" aria-live="assertive" style="color:#cc0000;font-weight:bold;"></p>
+              <p>
+                <button id="pde-reset" type="button">Reset</button>
+                <button id="pde-calculate" type="button">Calculate</button>
+              </p>
+            </form>
+
+            <h2>Method</h2>
+            <p>With \(x=\ln S\) and time to maturity \(\tau\), the option value solves \( V_\tau = \tfrac12\sigma^2 V_{xx} + (r-q-\tfrac12\sigma^2)V_x - rV \). American exercise adds the constraint \(V\ge g\), where \(g\) is the payoff: the PDE holds wherever \(V>g\), and the option is exercised where \(V=g\).</p>
+            <p>The grid is uniform in \(x\), centred on the spot and extending about five standard deviations. Each step uses Crank–Nicolson (second-order in time), with the first steps replaced by fully implicit half steps (Rannacher start-up) to damp oscillations from the payoff kink. The resulting tridiagonal system is solved with PSOR, projecting onto the payoff after every update. Delta and gamma come from central differences at the spot node. The European value on the same grid, using the Thomas algorithm, isolates the early exercise premium.</p>
+            <h2>Pros and cons of the PDE approach</h2>
+            <h3>Advantages</h3>
+            <ul>
+              <li><strong>Accuracy and smooth convergence:</strong> Crank–Nicolson is second-order in time and space, so errors shrink predictably as the grid is refined. There is no sampling noise, unlike Monte Carlo.</li>
+              <li><strong>Early exercise is natural:</strong> the PSOR projection handles the American constraint directly and, unlike least-squares Monte Carlo, needs no regression basis or estimated exercise rule.</li>
+              <li><strong>Greeks and the exercise boundary come for free:</strong> delta and gamma are read off the same grid, and the free boundary appears where the value meets the payoff.</li>
+              <li><strong>Flexible:</strong> discrete dividends, local volatility or barriers can be added by changing coefficients or boundary conditions.</li>
+              <li><strong>Fast in low dimensions:</strong> a single-asset problem solves in milliseconds in the browser.</li>
+            </ul>
+            <h3>Limitations</h3>
+            <ul>
+              <li><strong>Curse of dimensionality:</strong> cost grows exponentially with the number of underlyings or stochastic factors, so baskets and high-dimensional models favour Monte Carlo.</li>
+              <li><strong>Discretisation choices matter:</strong> results depend on grid width, step counts and boundary treatment. The payoff kink at the strike can reduce accuracy, which is why Rannacher start-up is used here, and a coarse grid can make delta and gamma noisy.</li>
+              <li><strong>Iterative solve:</strong> PSOR is simple and robust but slower than direct solvers, and its speed depends on the relaxation parameter and tolerance.</li>
+              <li><strong>Path dependence is awkward:</strong> features that depend on the price history need extra state variables, which enlarge the grid.</li>
+              <li><strong>Heavier than closed-form approximations:</strong> Barone-Adesi–Whaley or Bjerksund–Stensland are instant but less accurate, especially for long maturities or high dividend yields.</li>
+            </ul>
+            <p><small>References: Wilmott, Dewynne and Howison, "Option Pricing: Mathematical Models and Computation"; Cryer (1971) on projected SOR. This is an educational calculator, not investment advice.</small></p>
+            <div class="article related-calculators">
+              <h2>Related Calculators</h2>
+              <ul>
+                <li><a href="lsm-american-option-calculator.html">American option Monte Carlo (Longstaff-Schwartz) calculator</a></li>
+                <li><a href="BS_American.html">Bjerksund-Stensland American option approximation</a></li>
+                <li><a href="barone-adesi-whaley-american-option-pricer.html">Barone-Adesi-Whaley American option pricer</a></li>
+                <li><a href="TreeAmericanPut.html">Binomial tree American put pricer</a></li>
+              </ul>
+            </div>
+        </div>
+        <div class="sidebar">
+          <div class="gadget">
+            <h2 class="star"><span>Search</span></h2>
+            <div class="searchform"></div>
+          </div>
+          <div class="gadget">
+            <h2 class="star"><span>Methods</span></h2><div class="clr"></div>
+            <ul class="sb_menu">
+              <li><a href="AnalyticSolution.html">Analytic Solutions</a></li>
+              <li><a href="MonteCarlo.html">Monte Carlo methods</a></li>
+              <li><a href="NPDE.html">Numerical PDE Methods</a></li>
+              <li><a href="Tree.html">Tree Methods</a></li>
+              <li><a href="FFT.html">FFT Based Pricing Methods</a></li>
+            </ul>
+          </div>
+          <div class="gadget">
+            <h2 class="star"><span>Derivatives Markets</span></h2><div class="clr"></div>
+            <ul class="ex_menu">
+              <li><a href="Stock.html" title="stock Options">Stock Options</a><br />Including Exotic Options</li>
+              <li><a href="InterestRate.html">Interest Rate Derivatives</a><br />Short Rate Model</li>
+              <li><a href="Credit.html" title="Credit Derivatives">Credit Derivatives</a><br />structural Models and Reduced Models</li>
+            </ul>
+          </div>
+        </div>
+        <div class="clr"></div>
+      </div>
+    </div>
+
+  </div>
+  <div style="text-align:center">Copyright 2012-2026</div>
+</body>
+</html>
