@@ -83,6 +83,7 @@
             <p>Under the risk-neutral measure, \( S_{t+\Delta t}=S_t\exp\big((r-q-\tfrac12\sigma^2)\Delta t+\sigma\sqrt{\Delta t}\,Z\big) \), simulated with antithetic variates. Starting from maturity, the algorithm steps backward through the exercise dates. At each date, for in-the-money paths only, the discounted future cash flow is regressed on a polynomial in \(S_t/K\) to estimate the continuation value \(C(S_t)\). A path is exercised when the immediate payoff exceeds \(C(S_t)\); otherwise its later cash flow is kept. The price is the average discounted cash flow, floored at the payoff from exercising immediately.</p>
             <p>Because the exercise rule is estimated, LSM gives a slightly low-biased price for a given set of paths; more exercise dates, a suitable polynomial degree and more paths improve accuracy. Discrete exercise dates approximate continuous American exercise from below. An American call on a non-dividend-paying stock is never exercised early, so its premium over the European price should be near zero.</p>
             <p><small>Reference: Longstaff, F. and Schwartz, E. (2001), "Valuing American Options by Simulation: A Simple Least-Squares Approach", Review of Financial Studies 14(1). This is an educational calculator, not investment advice.</small></p>
+            <p>Compare American option pricing methods in the <a href="paper/American_option_pricers_comparison.pdf">American Option Pricers Comparison</a>.</p>
           </div>
         </div>
         <div class="sidebar">
