@@ -382,6 +382,20 @@ window.quantcalcSearchIndex = [
     ]
   },
   {
+    "url": "pde-american-option-calculator.html",
+    "title": "American Option Pricer - Numerical PDE (Crank-Nicolson PSOR)",
+    "section": "Pricing",
+    "summary": "Price American calls and puts with a finite-difference PDE solver and projected SOR, with delta, gamma and exercise boundary",
+    "keywords": [
+      "American option",
+      "Numerical PDE",
+      "Finite difference",
+      "Crank-Nicolson",
+      "PSOR",
+      "early exercise"
+    ]
+  },
+  {
     "url": "lsm-american-option-calculator.html",
     "title": "American Option Monte Carlo Calculator (Longstaff-Schwartz)",
     "section": "Pricing",
